@@ -1,0 +1,879 @@
+/* ── AgentPet Dock Pixel Cat ────────────────────────────────────── */
+/* Pixel unit: 4px. Cat is roughly 16×14 "pixels" = 64×56 real px  */
+
+:root {
+  --px: 4px;
+  /* Idle = gray */
+  --fur: #9e9e9e;
+  --fur-light: #bdbdbd;
+  --fur-dark: #757575;
+  --inner-ear: #ce93d8;
+  --eye: #212121;
+  --nose: #e8a0bf;
+}
+
+html, body, #root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+
+/* ── Dock strip: full width, transparent, positioned at bottom ─── */
+.dock-strip {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 160px;
+  pointer-events: none;
+}
+
+/* ── Cat container ───────────────────────────────────────────────── */
+.cat {
+  position: absolute;
+  bottom: 8px;
+  will-change: transform;
+  image-rendering: pixelated;
+}
+
+.cat-flip .cat-sprite {
+  transform: scaleX(-1);
+}
+
+.cat-sprite {
+  position: relative;
+  width: calc(16 * var(--px));
+  height: calc(18 * var(--px));
+}
+
+/* ── Ears ─────────────────────────────────────────────────────────── */
+.cat-ear {
+  position: absolute;
+  top: 0;
+  width: calc(3 * var(--px));
+  height: calc(4 * var(--px));
+  background: var(--fur);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+.cat-ear::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(1.5 * var(--px));
+  height: calc(2 * var(--px));
+  background: var(--inner-ear);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.cat-ear-l { left: calc(2 * var(--px)); }
+.cat-ear-r { right: calc(2 * var(--px)); }
+
+/* ── Head ─────────────────────────────────────────────────────────── */
+.cat-head {
+  position: absolute;
+  top: calc(3 * var(--px));
+  left: calc(2 * var(--px));
+  width: calc(12 * var(--px));
+  height: calc(6 * var(--px));
+  background: var(--fur);
+  border-radius: calc(2 * var(--px));
+  z-index: 2;
+}
+
+.cat-eye {
+  position: absolute;
+  top: calc(2 * var(--px));
+  width: calc(1.5 * var(--px));
+  height: calc(1.5 * var(--px));
+  background: var(--eye);
+  border-radius: 50%;
+}
+
+.cat-eye-l { left: calc(3 * var(--px)); }
+.cat-eye-r { right: calc(3 * var(--px)); }
+
+.cat-nose {
+  position: absolute;
+  bottom: calc(1.5 * var(--px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(1.5 * var(--px));
+  height: calc(1 * var(--px));
+  background: var(--nose);
+  border-radius: calc(0.5 * var(--px));
+}
+
+/* ── Torso ────────────────────────────────────────────────────────── */
+.cat-torso {
+  position: absolute;
+  top: calc(8 * var(--px));
+  left: calc(3 * var(--px));
+  width: calc(10 * var(--px));
+  height: calc(6 * var(--px));
+  background: var(--fur);
+  border-radius: calc(2 * var(--px));
+  z-index: 1;
+}
+
+/* ── Legs ─────────────────────────────────────────────────────────── */
+.cat-leg {
+  position: absolute;
+  bottom: 0;
+  width: calc(2 * var(--px));
+  height: calc(4 * var(--px));
+  background: var(--fur-dark);
+  border-radius: calc(1 * var(--px));
+  transform-origin: top center;
+}
+
+.cat-leg-fl { left: calc(3 * var(--px)); z-index: 2; }
+.cat-leg-fr { left: calc(6 * var(--px)); z-index: 0; }
+.cat-leg-bl { right: calc(6 * var(--px)); z-index: 0; }
+.cat-leg-br { right: calc(3 * var(--px)); z-index: 2; border-radius: calc(1 * var(--px)); }
+
+/* ── Tail ─────────────────────────────────────────────────────────── */
+.cat-tail {
+  position: absolute;
+  top: calc(8 * var(--px));
+  right: calc(-3 * var(--px));
+  width: calc(6 * var(--px));
+  height: calc(2 * var(--px));
+  background: var(--fur);
+  border-radius: 0 calc(1 * var(--px)) calc(1 * var(--px)) 0;
+  transform-origin: left center;
+  animation: tail-idle 3s ease-in-out infinite;
+}
+
+/* ── Speech Bubble (课本对话风格) ────────────────────────────── */
+.bubble {
+  position: absolute;
+  top: calc(-12 * var(--px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 2px solid #555;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  image-rendering: auto;
+  animation: bubble-in 0.25s ease-out;
+}
+/* 尖嘴引导脚: 用两层三角形模拟描边 */
+.bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: calc(50% - 2px);
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid #555;
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: calc(50% - 0px);
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid var(--bubble-bg, #fff);
+}
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.9); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+.bubble-active {
+  --bubble-bg: #fff3e0;
+  background: #fff3e0;
+  color: #e65100;
+  border-color: #ff9800;
+}
+.bubble-active::before { border-top-color: #ff9800; }
+
+.bubble-completed {
+  --bubble-bg: #e3f2fd;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-color: #42a5f5;
+}
+.bubble-completed::before { border-top-color: #42a5f5; }
+
+.bubble-failed {
+  --bubble-bg: #ffebee;
+  background: #ffebee;
+  color: #c62828;
+  border-color: #ef5350;
+}
+.bubble-failed::before { border-top-color: #ef5350; }
+
+/* ════════════════════════════════════════════════════════════════════
+   STATE: idle — gray, lying down
+   ════════════════════════════════════════════════════════════════════ */
+.cat-idle {
+  --fur: #9e9e9e;
+  --fur-light: #bdbdbd;
+  --fur-dark: #757575;
+}
+
+/* Lounge chair (behind the cat) */
+.cat-chair { display: none; }
+.cat-idle .cat-chair {
+  display: block;
+  position: absolute;
+  bottom: 0;
+  left: calc(-2 * var(--px));
+  width: calc(20 * var(--px));
+  height: calc(6 * var(--px));
+  z-index: -1;
+}
+/* Chair seat */
+.cat-idle .cat-chair::before {
+  content: '';
+  position: absolute;
+  bottom: calc(2 * var(--px));
+  left: 0;
+  width: 100%;
+  height: calc(2 * var(--px));
+  background: #a1887f;
+  border-radius: calc(1 * var(--px));
+}
+/* Chair legs */
+.cat-idle .cat-chair::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: calc(1 * var(--px));
+  width: calc(2 * var(--px));
+  height: calc(2.5 * var(--px));
+  background: #8d6e63;
+  border-radius: 0 0 calc(0.5 * var(--px)) calc(0.5 * var(--px));
+  box-shadow: calc(15 * var(--px)) 0 0 0 #8d6e63;
+}
+
+/* Lying down on the chair */
+.cat-idle .cat-torso {
+  height: calc(4 * var(--px));
+  top: calc(10 * var(--px));
+  width: calc(14 * var(--px));
+  left: calc(1 * var(--px));
+  border-radius: calc(2 * var(--px));
+}
+.cat-idle .cat-head {
+  top: calc(5 * var(--px));
+}
+.cat-idle .cat-ear { top: calc(2 * var(--px)); }
+.cat-idle .cat-leg {
+  height: calc(2 * var(--px));
+}
+.cat-idle .cat-tail {
+  top: calc(10 * var(--px));
+}
+.cat-idle .cat-eye {
+  height: calc(0.8 * var(--px));
+  top: calc(2 * var(--px));
+}
+
+/* Idle tail sway */
+@keyframes tail-idle {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(10deg); }
+}
+
+/* Idle breathing */
+.cat-idle .cat-sprite {
+  animation: breathe 4s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STATE: active — orange, walking
+   ════════════════════════════════════════════════════════════════════ */
+.cat-active {
+  --fur: #ff9800;
+  --fur-light: #ffb74d;
+  --fur-dark: #e65100;
+}
+
+/* Walking leg animation */
+.cat-active .cat-leg-fl { animation: walk-leg 0.35s ease-in-out infinite; }
+.cat-active .cat-leg-br { animation: walk-leg 0.35s ease-in-out infinite; }
+.cat-active .cat-leg-fr { animation: walk-leg 0.35s ease-in-out infinite 0.175s; }
+.cat-active .cat-leg-bl { animation: walk-leg 0.35s ease-in-out infinite 0.175s; }
+
+@keyframes walk-leg {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
+}
+
+/* Active tail */
+.cat-active .cat-tail {
+  animation: tail-active 0.6s ease-in-out infinite;
+}
+@keyframes tail-active {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(20deg); }
+}
+
+/* Slight vertical bob while walking */
+.cat-active .cat-sprite {
+  animation: walk-bob 0.35s ease-in-out infinite;
+}
+@keyframes walk-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.cat-active.cat-flip .cat-sprite {
+  animation: walk-bob-flip 0.35s ease-in-out infinite;
+}
+@keyframes walk-bob-flip {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50% { transform: scaleX(-1) translateY(-3px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STATE: completed — blue, sitting & drinking coffee
+   ════════════════════════════════════════════════════════════════════ */
+.cat-completed {
+  --fur: #42a5f5;
+  --fur-light: #90caf9;
+  --fur-dark: #1565c0;
+}
+
+/* Sitting pose: similar to idle but upright */
+.cat-completed .cat-torso {
+  height: calc(5 * var(--px));
+  top: calc(9 * var(--px));
+}
+.cat-completed .cat-leg {
+  height: calc(2.5 * var(--px));
+}
+.cat-completed .cat-tail {
+  top: calc(10 * var(--px));
+  animation: tail-happy 1.5s ease-in-out infinite;
+}
+@keyframes tail-happy {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(15deg); }
+}
+
+/* Coffee cup visible only in completed state */
+.cat-coffee {
+  display: none;
+}
+.cat-completed .cat-coffee {
+  display: block;
+  position: absolute;
+  top: calc(7 * var(--px));
+  left: calc(-3 * var(--px));
+  width: calc(3 * var(--px));
+  height: calc(3.5 * var(--px));
+  background: #fff;
+  border: calc(0.4 * var(--px)) solid #795548;
+  border-radius: 0 0 calc(0.8 * var(--px)) calc(0.8 * var(--px));
+  animation: sip 2.5s ease-in-out infinite;
+}
+/* Cup handle */
+.cat-completed .cat-coffee::before {
+  content: '';
+  position: absolute;
+  right: calc(-1.5 * var(--px));
+  top: calc(0.3 * var(--px));
+  width: calc(1.2 * var(--px));
+  height: calc(1.5 * var(--px));
+  border: calc(0.4 * var(--px)) solid #795548;
+  border-left: none;
+  border-radius: 0 calc(1 * var(--px)) calc(1 * var(--px)) 0;
+}
+/* Steam — subtle wisps above cup */
+.cat-completed .cat-coffee::after {
+  content: '';
+  position: absolute;
+  top: calc(-2 * var(--px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(0.8 * var(--px));
+  height: calc(1.5 * var(--px));
+  background: rgba(200, 200, 200, 0.7);
+  border-radius: calc(1 * var(--px));
+  box-shadow:
+    calc(-1.5 * var(--px)) 0 0 0 rgba(200, 200, 200, 0.5),
+    calc(1.5 * var(--px)) 0 0 0 rgba(200, 200, 200, 0.5);
+  animation: steam 1.5s ease-in-out infinite;
+}
+@keyframes sip {
+  0%, 70%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-3px); }
+}
+@keyframes steam {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) translateY(0) scaleY(1); }
+  50% { opacity: 0.8; transform: translateX(-50%) translateY(-6px) scaleY(1.3); }
+}
+
+/* Gentle sway while sipping */
+.cat-completed .cat-sprite {
+  animation: sit-sway 3s ease-in-out infinite;
+}
+@keyframes sit-sway {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+.cat-completed.cat-flip .cat-sprite {
+  animation: sit-sway-flip 3s ease-in-out infinite;
+}
+@keyframes sit-sway-flip {
+  0%, 100% { transform: scaleX(-1) translateY(0); }
+  50% { transform: scaleX(-1) translateY(-2px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STATE: failed — red tint, shaking
+   ════════════════════════════════════════════════════════════════════ */
+.cat-failed {
+  --fur: #ef5350;
+  --fur-light: #ef9a9a;
+  --fur-dark: #c62828;
+}
+
+.cat-failed .cat-sprite {
+  animation: shake 0.3s ease-in-out infinite;
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+.cat-failed.cat-flip .cat-sprite {
+  animation: shake-flip 0.3s ease-in-out infinite;
+}
+@keyframes shake-flip {
+  0%, 100% { transform: scaleX(-1) translateX(0); }
+  25% { transform: scaleX(-1) translateX(-3px); }
+  75% { transform: scaleX(-1) translateX(3px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ZZZ SLEEP INDICATOR (idle only)
+   ════════════════════════════════════════════════════════════════════ */
+.zzz { display: none; }
+.cat-idle .zzz {
+  display: block;
+  position: absolute;
+  top: calc(-2 * var(--px));
+  right: calc(-2 * var(--px));
+  pointer-events: none;
+  image-rendering: auto;
+}
+.z {
+  position: absolute;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-weight: 900;
+  color: #888;
+  opacity: 0;
+}
+.cat-idle .z1 {
+  bottom: 0; right: 0;
+  font-size: 10px;
+  animation: zzz-float 3s ease-in-out infinite;
+}
+.cat-idle .z2 {
+  bottom: 4px; right: 8px;
+  font-size: 13px;
+  animation: zzz-float 3s ease-in-out infinite 0.8s;
+}
+.cat-idle .z3 {
+  bottom: 10px; right: 14px;
+  font-size: 16px;
+  animation: zzz-float 3s ease-in-out infinite 1.6s;
+}
+@keyframes zzz-float {
+  0% { opacity: 0; transform: translateY(0); }
+  15% { opacity: 0.9; }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   PET NAME LABEL
+   ════════════════════════════════════════════════════════════════════ */
+.pet-name {
+  position: absolute;
+  top: calc(-8 * var(--px));
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  color: #777;
+  white-space: nowrap;
+  pointer-events: none;
+  image-rendering: auto;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   ANIMAL VARIANTS
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Cat (default, no extra overrides needed) ────────────────────── */
+
+/* ── Dog ─────────────────────────────────────────────────────────── */
+.animal-dog.cat-idle {
+  --fur: #8d6e63; --fur-light: #a1887f; --fur-dark: #5d4037;
+  --inner-ear: #d7ccc8; --nose: #333;
+}
+.animal-dog .cat-ear {
+  clip-path: none;
+  border-radius: calc(1.5 * var(--px)) calc(1.5 * var(--px)) 0 0;
+  width: calc(3.5 * var(--px));
+  height: calc(5 * var(--px));
+  top: calc(1 * var(--px));
+}
+.animal-dog .cat-ear-l { transform: rotate(-20deg); }
+.animal-dog .cat-ear-r { transform: rotate(20deg); }
+.animal-dog .cat-ear::after {
+  clip-path: none;
+  border-radius: calc(1 * var(--px));
+  width: calc(2 * var(--px));
+  height: calc(2.5 * var(--px));
+}
+.animal-dog .cat-nose {
+  width: calc(2.5 * var(--px));
+  height: calc(1.5 * var(--px));
+  background: #333;
+  border-radius: calc(1 * var(--px));
+}
+.animal-dog .cat-tail {
+  width: calc(5 * var(--px));
+  height: calc(2.5 * var(--px));
+  border-radius: calc(1 * var(--px)) calc(2 * var(--px)) 0 0;
+  top: calc(7 * var(--px));
+}
+
+/* ── Lobster ─────────────────────────────────────────────────────── */
+.animal-lobster.cat-idle {
+  --fur: #d84315; --fur-light: #ff5722; --fur-dark: #bf360c;
+  --inner-ear: #ff8a65; --eye: #fff; --nose: #bf360c;
+}
+.animal-lobster .cat-ear {
+  clip-path: none;
+  width: calc(0.8 * var(--px));
+  height: calc(7 * var(--px));
+  border-radius: calc(0.5 * var(--px));
+  top: calc(-3 * var(--px));
+}
+.animal-lobster .cat-ear::after { display: none; }
+.animal-lobster .cat-ear-l { left: calc(4 * var(--px)); transform: rotate(-15deg); }
+.animal-lobster .cat-ear-r { right: calc(4 * var(--px)); transform: rotate(15deg); }
+.animal-lobster .cat-head {
+  border-radius: calc(3 * var(--px)) calc(3 * var(--px)) calc(1 * var(--px)) calc(1 * var(--px));
+}
+.animal-lobster .cat-nose { display: none; }
+.animal-lobster .cat-eye {
+  width: calc(1.5 * var(--px));
+  height: calc(1.5 * var(--px));
+  border-radius: 50%;
+}
+.animal-lobster .cat-torso {
+  border-radius: calc(1 * var(--px));
+}
+/* Claws */
+.animal-lobster .cat-head::before {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--px));
+  left: calc(-4 * var(--px));
+  width: calc(3 * var(--px));
+  height: calc(3 * var(--px));
+  border: calc(0.5 * var(--px)) solid var(--fur-dark);
+  border-radius: 50%;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(-45deg);
+}
+.animal-lobster .cat-head::after {
+  content: '';
+  position: absolute;
+  bottom: calc(-1 * var(--px));
+  right: calc(-4 * var(--px));
+  width: calc(3 * var(--px));
+  height: calc(3 * var(--px));
+  border: calc(0.5 * var(--px)) solid var(--fur-dark);
+  border-radius: 50%;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(45deg);
+}
+.animal-lobster .cat-leg {
+  height: calc(2 * var(--px));
+  width: calc(1.5 * var(--px));
+}
+.animal-lobster .cat-tail {
+  width: calc(5 * var(--px));
+  height: calc(4 * var(--px));
+  border-radius: 0 calc(2 * var(--px)) calc(2 * var(--px)) 0;
+  top: calc(9 * var(--px));
+  clip-path: polygon(0% 50%, 40% 0%, 100% 0%, 100% 100%, 40% 100%);
+}
+
+/* ── Penguin ─────────────────────────────────────────────────────── */
+.animal-penguin.cat-idle {
+  --fur: #37474f; --fur-light: #546e7a; --fur-dark: #263238;
+  --inner-ear: #37474f; --eye: #fff; --nose: #ff9800;
+}
+.animal-penguin .cat-ear { display: none; }
+.animal-penguin .cat-head {
+  border-radius: calc(3 * var(--px));
+  height: calc(7 * var(--px));
+}
+.animal-penguin .cat-eye {
+  background: #fff;
+  width: calc(2.5 * var(--px));
+  height: calc(2.5 * var(--px));
+  border-radius: 50%;
+  top: calc(1.5 * var(--px));
+}
+.animal-penguin .cat-eye::after {
+  content: '';
+  position: absolute;
+  top: calc(0.5 * var(--px));
+  left: calc(0.5 * var(--px));
+  width: calc(1.2 * var(--px));
+  height: calc(1.2 * var(--px));
+  background: #212121;
+  border-radius: 50%;
+}
+.animal-penguin .cat-nose {
+  background: #ff9800;
+  width: calc(2 * var(--px));
+  height: calc(1 * var(--px));
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  border-radius: 0;
+}
+/* White belly */
+.animal-penguin .cat-torso {
+  position: relative;
+}
+.animal-penguin .cat-torso::after {
+  content: '';
+  position: absolute;
+  top: calc(0.5 * var(--px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(7 * var(--px));
+  height: calc(5 * var(--px));
+  background: #eceff1;
+  border-radius: calc(2 * var(--px));
+}
+.animal-penguin .cat-leg {
+  height: calc(2 * var(--px));
+  width: calc(3 * var(--px));
+  background: #ff9800;
+  border-radius: 0 0 calc(1 * var(--px)) calc(1 * var(--px));
+}
+.animal-penguin .cat-leg-fl { left: calc(2 * var(--px)); }
+.animal-penguin .cat-leg-fr { left: calc(5 * var(--px)); }
+.animal-penguin .cat-leg-bl { right: calc(5 * var(--px)); }
+.animal-penguin .cat-leg-br { right: calc(2 * var(--px)); }
+.animal-penguin .cat-tail { display: none; }
+
+/* ── Panda ───────────────────────────────────────────────────────── */
+.animal-panda.cat-idle {
+  --fur: #fafafa; --fur-light: #fff; --fur-dark: #212121;
+  --inner-ear: #212121; --eye: #212121; --nose: #333;
+}
+.animal-panda .cat-ear {
+  clip-path: none;
+  border-radius: 50%;
+  background: #212121;
+  width: calc(3.5 * var(--px));
+  height: calc(3.5 * var(--px));
+}
+.animal-panda .cat-ear::after {
+  background: #333;
+  clip-path: none;
+  border-radius: 50%;
+  width: calc(1.5 * var(--px));
+  height: calc(1.5 * var(--px));
+}
+/* Black eye patches */
+.animal-panda .cat-eye {
+  width: calc(3 * var(--px));
+  height: calc(2.5 * var(--px));
+  background: #212121;
+  border-radius: 50%;
+}
+.animal-panda .cat-eye::after {
+  content: '';
+  position: absolute;
+  top: calc(0.3 * var(--px));
+  left: calc(0.5 * var(--px));
+  width: calc(1.2 * var(--px));
+  height: calc(1.2 * var(--px));
+  background: #fff;
+  border-radius: 50%;
+}
+.animal-panda .cat-eye-l { left: calc(2 * var(--px)); }
+.animal-panda .cat-eye-r { right: calc(2 * var(--px)); }
+.animal-panda .cat-nose {
+  background: #333;
+  width: calc(2 * var(--px));
+  border-radius: calc(0.5 * var(--px));
+}
+.animal-panda .cat-leg {
+  background: #212121;
+}
+.animal-panda .cat-tail {
+  width: calc(2 * var(--px));
+  height: calc(2 * var(--px));
+  border-radius: 50%;
+  top: calc(9 * var(--px));
+  right: calc(-2 * var(--px));
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SETTINGS OVERLAY
+   ════════════════════════════════════════════════════════════════════ */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: #fff;
+  overflow-y: auto;
+}
+.settings-panel {
+  padding: 24px 28px;
+  width: 100%;
+  max-width: 360px;
+  font-family: -apple-system, 'Segoe UI', sans-serif;
+}
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.settings-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+.btn-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+.btn-close:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+.settings-section {
+  margin-bottom: 20px;
+}
+.settings-section label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.settings-section input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.settings-section input[type="text"]:focus {
+  border-color: #42a5f5;
+}
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.animal-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.animal-btn:hover {
+  border-color: #90caf9;
+  background: #e3f2fd;
+}
+.animal-btn.selected {
+  border-color: #42a5f5;
+  background: #e3f2fd;
+  box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.3);
+}
+.animal-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+.animal-label {
+  font-size: 11px;
+  color: #555;
+}
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+.btn-save, .btn-cancel {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn-save {
+  background: #42a5f5;
+  color: #fff;
+}
+.btn-save:hover { background: #1e88e5; }
+.btn-cancel {
+  background: #e0e0e0;
+  color: #555;
+}
+.btn-cancel:hover { background: #bdbdbd; }

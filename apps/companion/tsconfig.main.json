@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/main",
+    "rootDirs": [
+      "src/main",
+      "../../packages/protocol/src"
+    ]
+  },
+  "include": ["src/main/**/*.ts"]
+}

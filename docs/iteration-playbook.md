@@ -1,0 +1,52 @@
+# 迭代手册
+
+## 当前架构
+
+项目只有两个运行时组件：MCP Server + Electron Companion。
+Agent 通过 VS Code 全局 prompts 和 mcp.json（Companion 启动时自动注册）进行集成。
+
+## 已实现功能
+
+- 像素风宠物动画（4种状态：idle/active/completed/failed）
+- 睡觉 zzz 动画（idle 状态）
+- 语音气泡显示任务标题
+- 5 种动物选择：猫咪、狗狗、龙虾、企鹅、熊猫
+- 宠物命名（idle时显示名字）
+- 设置持久化（动物 + 名字）
+- 独立设置窗口（避免透明窗口 resize 问题）
+- VS Code 全局自动注册
+
+## 后续改进方向
+
+### 1. 动画视觉加强
+
+- 用 Lottie 或 Sprite Sheet 替换 CSS 像素画
+- 为不同动物定制专属动画
+- 增加庆祝 / 思考等更多状态
+
+### 2. 多屏幕支持
+
+- 当前只支持主显示器，后续可检测用户选择的显示器
+
+### 3. 打包分发
+
+- electron-builder 打包为 exe/dmg
+- 安装包自动注册到 VS Code
+
+### 4. 更多动物
+
+- 支持用户自定义像素精灵
+- 提供动物市场
+
+## 添加 MCP 工具的步骤
+
+1. 在 `packages/mcp-server/index.mjs` 的 TOOLS 数组中添加工具定义
+2. 在 `handleRequest` 的 `tools/call` 分支中支持新工具逻辑
+3. 如需要新的通知类型，在 `packages/protocol/src/index.ts` 中更新类型
+4. 在 Companion 的 `App.tsx` 中处理新的通知
+
+## 添加新动物的步骤
+
+1. 在 `packages/protocol/src/index.ts` 的 `AnimalType` 中添加类型
+2. 在 `App.tsx` 的 `ANIMALS` 数组中添加 emoji 和标签
+3. 在 `styles.css` 中添加 `.animal-xxx` CSS 变体样式

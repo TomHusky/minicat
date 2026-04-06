@@ -1,0 +1,20 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:companion",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:companion"],
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "typecheck:workspace",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "typecheck"],
+      "problemMatcher": ["$tsc"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "agentpet",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:companion": "npm run build -w @agentpet/companion",
+    "dev": "npm run dev -w @agentpet/companion",
+    "start:companion": "npm run start:built -w @agentpet/companion",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

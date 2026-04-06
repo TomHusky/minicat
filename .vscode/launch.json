@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug agentpet Companion",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+      "args": [
+        "${workspaceFolder}/apps/companion/dist/main/apps/companion/src/main/main.js"
+      ],
+      "preLaunchTask": "build:companion",
+      "console": "integratedTerminal"
+    }
+  ]
+}
