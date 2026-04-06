@@ -45,7 +45,7 @@ interface PetNotification {
 ## 设置模型
 
 ```typescript
-type AnimalType = 'cat' | 'dog' | 'lobster' | 'penguin' | 'panda';
+type AnimalType = 'cat' | 'dog' | 'lobster';
 
 interface PetSettings {
   animal: AnimalType;

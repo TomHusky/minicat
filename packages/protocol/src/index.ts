@@ -1,8 +1,9 @@
-export type AnimalType = 'cat' | 'dog' | 'lobster' | 'penguin' | 'panda';
+export type AnimalType = 'cat' | 'lobster';
 
 export interface PetSettings {
   animal: AnimalType;
   name: string;
+  copilotListenerEnabled: boolean;
 }
 
 export interface PetNotification {
