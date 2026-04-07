@@ -251,18 +251,18 @@ export class PetAnimator {
     const headDip = Math.sin(this.elapsed * 2.8) * 0.9;
     const tailSway = Math.sin(this.elapsed * 2) * 3.4;
 
-    this.drawShadow(94, 120, 44, 8);
-    this.drawLaptop(111, 88, 70, 42, 0.12, '#6c7a89', '#18212c', '#8fe3ff');
-    this.drawTail(57, 109, -10, -25, tailSway, 0.24, this.colors.body, this.colors.body, 7);
+    this.drawShadow(92, 120, 46, 8);
+    this.drawLaptop(92, 88, 92, 48, 0, '#6c7a89', '#18212c', '#8fe3ff');
+    this.drawTail(58, 110, -8, -24, tailSway, 0.24, this.colors.body, this.colors.body, 7);
 
     ctx.save();
     ctx.translate(0, breathe * 0.45);
-    this.drawCatWorkingBody(78, 94, 26, 31);
-    this.drawCatWorkingBackHead(80, 65 + headDip);
-    this.drawCatTypingPaw(96, 97 - pawLiftLeft, 11, 6, -0.1);
-    this.drawCatTypingPaw(109, 98 - pawLiftRight, 11, 6, 0.08);
-    this.drawCatTypingPaw(68, 114, 11, 7, 0.14);
-    this.drawCatTypingPaw(84, 114, 11, 7, -0.06);
+    this.drawCatWorkingBody(90, 95, 28, 32);
+    this.drawCatWorkingBackHead(90, 66 + headDip);
+    this.drawCatTypingPaw(106, 98 - pawLiftLeft, 11, 6, -0.1);
+    this.drawCatTypingPaw(119, 99 - pawLiftRight, 11, 6, 0.08);
+    this.drawCatTypingPaw(78, 115, 11, 7, 0.14);
+    this.drawCatTypingPaw(95, 115, 11, 7, -0.06);
     ctx.restore();
   }
 
@@ -325,7 +325,7 @@ export class PetAnimator {
     const claw = Math.sin(this.elapsed * 10) * 0.08;
 
     this.drawShadow(96, 119, 34, 8);
-    this.drawLaptop(107, 91, 64, 40, 0.12, '#7b8899', '#17202b', '#8fe3ff');
+    this.drawLaptop(107, 91, 64, 40, 0, '#7b8899', '#17202b', '#8fe3ff');
     this.drawLobsterClaw(72, 92 + bob, -0.2 + claw, false);
     this.drawLobsterClaw(104, 92 + bob, 0.18 - claw, true);
     this.drawLobsterBody(82, 92 + bob, 0.88);

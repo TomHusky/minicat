@@ -46,7 +46,7 @@ Companion 启动后会自动注册到 VS Code 全局：
 - `%APPDATA%/Code/User/mcp.json` — MCP Server 配置
 - `~/.copilot/instructions/agentpet.instructions.md` — 用户级 Copilot instructions 文件
 
-项目内的 Copilot 指令模板存放在 `apps/companion/public/copilot-instructions.md`，Companion 启动后会从应用资源中复制到 VS Code 全局配置目录。
+项目内的 Copilot 指令模板存放在 `apps/companion/public/copilot-instructions.md`，Companion 启动后会从应用资源中复制到全局目录；退出 Companion 时会自动删除该 instructions 文件，避免在应用未运行时继续影响 Copilot。
 
 所有项目打开后即可使用，无需每个项目单独配置。
 
@@ -56,7 +56,7 @@ Companion 启动后会自动注册到 VS Code 全局：
 
 | 状态 | 动画 | 说明 |
 |------|------|------|
-| idle | 坐着 / 趴着轮换 | 无任务时在两种空闲动作之间循环 |
+| idle | 坐着 / 睡觉 | 用户有键盘或鼠标操作时保持坐着，连续 1 分钟无操作时切换为睡觉 |
 | active | 背身操作电脑 | Agent 正在执行任务时切换到工作状态 |
 | completed | 保持空闲动作轮换 + 成功气泡 | 任务完成后显示成功提示，60 秒后清除 |
 | failed | 保持空闲动作轮换 + 失败气泡 | 任务失败后显示失败提示，5 秒后清除 |

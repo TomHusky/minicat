@@ -8,7 +8,7 @@ import type { BrowserWindow as BrowserWindowInstance, Tray as TrayInstance } fro
 import type { PetNotification, PetSettings } from '@agentpet/protocol';
 
 // Use createRequire to avoid the ESM cjsPreparseModuleExports crash in Node.js 22 / Electron 41
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } =
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, powerMonitor } =
   createRequire(import.meta.url)('electron') as typeof import('electron');
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -20,14 +20,18 @@ let mainWindow: BrowserWindowInstance | null = null;
 let settingsWindow: BrowserWindowInstance | null = null;
 let tray: TrayInstance | null = null;
 let isQuitting = false;
+let userActivityMonitorTimer: NodeJS.Timeout | null = null;
+let isUserActive = true;
 const currentModuleDir = dirname(fileURLToPath(import.meta.url));
 const compiledAppRoot = resolve(currentModuleDir, '../../../../../../');
 
 const PET_WIDTH = 300;
-const PET_HEIGHT = 140;
+const PET_HEIGHT = 192;
 const SETTINGS_WIDTH = 380;
 const SETTINGS_HEIGHT = 420;
 const TASKBAR_GAP = 4;
+const USER_IDLE_THRESHOLD_SECONDS = 60;
+const USER_IDLE_POLL_INTERVAL_MS = 5000;
 const DEFAULT_SETTINGS: PetSettings = { animal: 'cat', name: '', copilotListenerEnabled: true };
 const GLOBAL_INSTRUCTIONS_FRONTMATTER = ['---', 'applyTo: "**"', '---', ''].join('\n');
 const FALLBACK_INSTRUCTIONS_BODY = [
@@ -81,9 +85,7 @@ function normalizeSettings(raw: unknown): PetSettings {
   return {
     animal: parsed.animal === 'lobster' ? 'lobster' : 'cat',
     name: typeof parsed.name === 'string' ? parsed.name : '',
-    copilotListenerEnabled: typeof parsed.copilotListenerEnabled === 'boolean'
-      ? parsed.copilotListenerEnabled
-      : DEFAULT_SETTINGS.copilotListenerEnabled,
+    copilotListenerEnabled: DEFAULT_SETTINGS.copilotListenerEnabled,
   };
 }
 
@@ -143,6 +145,41 @@ function resolveAppAssetPath(...relativeCandidates: string[]): string {
 
 function broadcast(notification: PetNotification): void {
   mainWindow?.webContents.send('agentpet:notify', notification);
+}
+
+function detectIsUserActive(): boolean {
+  return powerMonitor.getSystemIdleTime() < USER_IDLE_THRESHOLD_SECONDS;
+}
+
+function broadcastUserActivity(active: boolean): void {
+  mainWindow?.webContents.send('agentpet:user-activity-changed', active);
+}
+
+function syncUserActivity(force = false): void {
+  const nextIsUserActive = detectIsUserActive();
+  if (!force && nextIsUserActive === isUserActive) {
+    return;
+  }
+
+  isUserActive = nextIsUserActive;
+  broadcastUserActivity(isUserActive);
+}
+
+function startUserActivityMonitor(): void {
+  stopUserActivityMonitor();
+  syncUserActivity(true);
+  userActivityMonitorTimer = setInterval(() => {
+    syncUserActivity();
+  }, USER_IDLE_POLL_INTERVAL_MS);
+}
+
+function stopUserActivityMonitor(): void {
+  if (!userActivityMonitorTimer) {
+    return;
+  }
+
+  clearInterval(userActivityMonitorTimer);
+  userActivityMonitorTimer = null;
 }
 
 // ── VS Code global registration ───────────────────────────────────────────
@@ -404,23 +441,20 @@ app.whenReady().then(() => {
   const initialSettings = loadSettings();
 
   try {
-    syncCopilotInstructionsLink(initialSettings.copilotListenerEnabled);
+    syncCopilotInstructionsLink(true);
   } catch (error) {
     console.error('[agentpet] Failed to sync Copilot instructions link on startup:', error);
   }
 
   // Settings IPC
   ipcMain.handle('agentpet:get-settings', () => loadSettings());
+  ipcMain.handle('agentpet:get-user-activity', () => isUserActive);
   ipcMain.handle('agentpet:save-settings', (_e, settings: PetSettings) => {
-    const previousSettings = loadSettings();
     const nextSettings = normalizeSettings(settings);
-
-    syncCopilotInstructionsLink(nextSettings.copilotListenerEnabled);
 
     try {
       saveSettingsFile(nextSettings);
     } catch (error) {
-      syncCopilotInstructionsLink(previousSettings.copilotListenerEnabled);
       throw error;
     }
 
@@ -432,6 +466,7 @@ app.whenReady().then(() => {
   mainWindow = createPetWindow();
   tray = createTray();
   createEventServer();
+  startUserActivityMonitor();
 
   app.on('activate', () => {
     if (!mainWindow) mainWindow = createPetWindow();
@@ -449,7 +484,16 @@ app.on('second-instance', () => {
   }
 });
 
-app.on('before-quit', () => { isQuitting = true; });
+app.on('before-quit', () => {
+  isQuitting = true;
+  stopUserActivityMonitor();
+
+  try {
+    syncCopilotInstructionsLink(false);
+  } catch (error) {
+    console.error('[agentpet] Failed to remove Copilot instructions link on quit:', error);
+  }
+});
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

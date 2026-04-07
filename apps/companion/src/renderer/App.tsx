@@ -7,7 +7,9 @@ declare global {
     agentpet: {
       onNotify(listener: (notification: PetNotification) => void): () => void;
       onSettingsChanged(listener: (settings: PetSettings) => void): () => void;
+      onUserActivityChanged(listener: (active: boolean) => void): () => void;
       getSettings(): Promise<PetSettings>;
+      getUserActivity(): Promise<boolean>;
       saveSettings(settings: PetSettings): Promise<void>;
       closeSettings(): void;
       isSettingsWindow(): boolean;
@@ -16,8 +18,6 @@ declare global {
 }
 
 type PetPhase = 'idle' | 'active' | 'completed' | 'failed';
-
-const IDLE_ANIMATION_STATES: PetAnimationState[] = ['sitting', 'resting'];
 
 function isIdleLikeStatus(status: PetPhase) {
   return status !== 'active';
@@ -47,7 +47,6 @@ function phaseToStatus(phase: string): PetPhase {
 function SettingsPanel() {
   const [editAnimal, setEditAnimal] = useState<AnimalType>('cat');
   const [editName, setEditName] = useState('');
-  const [copilotListenerEnabled, setCopilotListenerEnabled] = useState(true);
   const [saveError, setSaveError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -56,7 +55,6 @@ function SettingsPanel() {
       if (s) {
         setEditAnimal(normalizeAnimal(s.animal));
         setEditName(s.name);
-        setCopilotListenerEnabled(s.copilotListenerEnabled);
       }
     });
   }, []);
@@ -69,7 +67,7 @@ function SettingsPanel() {
       const settings: PetSettings = {
         animal: editAnimal,
         name: editName,
-        copilotListenerEnabled,
+        copilotListenerEnabled: true,
       };
       await window.agentpet.saveSettings(settings);
       window.agentpet.closeSettings();
@@ -79,7 +77,7 @@ function SettingsPanel() {
     } finally {
       setIsSaving(false);
     }
-  }, [copilotListenerEnabled, editAnimal, editName]);
+  }, [editAnimal, editName]);
 
   const handleCancel = useCallback(() => {
     window.agentpet.closeSettings();
@@ -92,7 +90,7 @@ function SettingsPanel() {
           <div>
             <p className="settings-eyebrow">AgentPet</p>
             <h2>桌面宠物设置</h2>
-            <p className="settings-subtitle">调整宠物外观，并控制是否将 Copilot 指令接入 VS Code 全局配置。</p>
+            <p className="settings-subtitle">调整宠物外观。Companion 运行期间会自动接入 Copilot 全局指令，退出应用时自动清理。</p>
           </div>
           <div className="settings-preview" aria-hidden="true">
             <span>{editAnimal === 'lobster' ? '🦞' : '🐱'}</span>
@@ -118,20 +116,10 @@ function SettingsPanel() {
 
         <div className="settings-toggle-row">
           <div className="settings-toggle-copy">
-            <label htmlFor="copilot-listener-toggle">Copilot 全局监听</label>
-            <p>同步到用户级 Copilot instructions，指导自动调用 AgentPet MCP</p>
+            <label>Copilot 全局监听</label>
+            <p>打开应用时自动写入用户级 Copilot instructions，退出应用时自动删除该文件。</p>
           </div>
-          <button
-            id="copilot-listener-toggle"
-            type="button"
-            className={`settings-switch${copilotListenerEnabled ? ' is-on' : ''}`}
-            aria-pressed={copilotListenerEnabled}
-            onClick={() => setCopilotListenerEnabled(prev => !prev)}
-          >
-            <span className="settings-switch-track">
-              <span className="settings-switch-thumb" />
-            </span>
-          </button>
+          <div className="settings-status-pill" aria-hidden="true">运行中自动开启</div>
         </div>
 
         {saveError ? <div className="settings-error">{saveError}</div> : null}
@@ -154,10 +142,9 @@ function PetView() {
   const [bubbleText, setBubbleText] = useState('');
   const [animal, setAnimal] = useState<AnimalType>('cat');
   const [petName, setPetName] = useState('');
-  const idleCycleTimerRef = useRef<number | null>(null);
+  const [isUserActive, setIsUserActive] = useState(true);
   const statusRef = useRef<PetPhase>('idle');
   const animationStateRef = useRef<PetAnimationState>('sitting');
-  const idleAnimationIndexRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const petRef = useRef<PetAnimator | null>(null);
 
@@ -188,43 +175,17 @@ function PetView() {
   }, [petAnimationState]);
 
   useEffect(() => {
-    if (idleCycleTimerRef.current !== null) {
-      window.clearInterval(idleCycleTimerRef.current);
-      idleCycleTimerRef.current = null;
-    }
-
     if (status === 'active') {
       setPetAnimationState('working');
       return;
     }
 
-    const applyIdleAnimation = (index: number) => {
-      idleAnimationIndexRef.current = index;
-      setPetAnimationState(IDLE_ANIMATION_STATES[index]);
-    };
-
     if (!isIdleLikeStatus(status)) {
       return;
     }
 
-    if (!IDLE_ANIMATION_STATES.includes(animationStateRef.current)) {
-      applyIdleAnimation(idleAnimationIndexRef.current % IDLE_ANIMATION_STATES.length);
-    } else {
-      setPetAnimationState(animationStateRef.current);
-    }
-
-    idleCycleTimerRef.current = window.setInterval(() => {
-      const nextIndex = (idleAnimationIndexRef.current + 1) % IDLE_ANIMATION_STATES.length;
-      applyIdleAnimation(nextIndex);
-    }, 7000);
-
-    return () => {
-      if (idleCycleTimerRef.current !== null) {
-        window.clearInterval(idleCycleTimerRef.current);
-        idleCycleTimerRef.current = null;
-      }
-    };
-  }, [status]);
+    setPetAnimationState(isUserActive ? 'sitting' : 'resting');
+  }, [isUserActive, status]);
 
   useEffect(() => {
     petRef.current?.setFacingRight(facingRight);
@@ -241,10 +202,23 @@ function PetView() {
   }, []);
 
   useEffect(() => {
+    window.agentpet?.getUserActivity?.().then(active => {
+      setIsUserActive(Boolean(active));
+    });
+  }, []);
+
+  useEffect(() => {
     if (!window.agentpet?.onSettingsChanged) return;
     return window.agentpet.onSettingsChanged(s => {
       setAnimal(normalizeAnimal(s.animal));
       setPetName(s.name);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!window.agentpet?.onUserActivityChanged) return;
+    return window.agentpet.onUserActivityChanged(active => {
+      setIsUserActive(active);
     });
   }, []);
 
@@ -283,7 +257,7 @@ function PetView() {
           className="cat-canvas"
         />
         
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+        <div className="cat-overlay">
           {bubbleText && (
             <div className={`bubble bubble-${status}`}>{bubbleText}</div>
           )}

@@ -12,8 +12,16 @@ contextBridge.exposeInMainWorld('agentpet', {
     ipcRenderer.on('agentpet:settings-changed', wrapped);
     return () => ipcRenderer.removeListener('agentpet:settings-changed', wrapped);
   },
+  onUserActivityChanged(listener: (active: boolean) => void) {
+    const wrapped = (_event: unknown, payload: boolean) => listener(payload);
+    ipcRenderer.on('agentpet:user-activity-changed', wrapped);
+    return () => ipcRenderer.removeListener('agentpet:user-activity-changed', wrapped);
+  },
   getSettings(): Promise<PetSettings> {
     return ipcRenderer.invoke('agentpet:get-settings');
+  },
+  getUserActivity(): Promise<boolean> {
+    return ipcRenderer.invoke('agentpet:get-user-activity');
   },
   saveSettings(settings: PetSettings): Promise<void> {
     return ipcRenderer.invoke('agentpet:save-settings', settings);
