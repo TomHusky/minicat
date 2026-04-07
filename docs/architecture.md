@@ -23,7 +23,7 @@ Copilot Agent  --MCP (stdio)-->  MCP Server  --HTTP POST-->  Electron Companion
 - 透明、无边框、始终置顶的 Electron 窗口 (300×140)
 - Windows: 定位在右下角系统托盘上方；macOS: 定位在 dock 居中上方
 - HTTP 服务器监听 `/notify`（接收通知）和 `/ping`（健康检查）
-- 启动时自动注册到 VS Code 全局 mcp.json 和 prompts 目录
+- 启动时自动注册到 VS Code 全局 mcp.json，并同步用户级 Copilot instructions 文件
 - 设置窗口：独立 BrowserWindow (400×460)，通过 URL hash `#settings` 区分
 - 设置持久化：保存到 `app.getPath('userData')/settings.json`
 
@@ -56,10 +56,10 @@ interface PetSettings {
 ## 宠物状态机
 
 ```
-idle (睡觉 zzz)  <--60s-- completed (喝咖啡)
-idle            <--5s---  failed (抠动)
-idle            <-------- (始终回归这里)
-  ^active: 步行动画
+idle (坐着 / 趴着轮换) <--60s-- completed (成功气泡，动作继续轮换)
+idle (坐着 / 趴着轮换) <--5s--- failed (失败气泡，动作继续轮换)
+idle (坐着 / 趴着轮换) <-------- (始终回归这里)
+  ^active: 背身操作电脑动画
 ```
 
 ## 窗口架构
@@ -72,4 +72,6 @@ idle            <-------- (始终回归这里)
 
 Companion 启动时自动写入：
 - `%APPDATA%/Code/User/mcp.json` — 所有项目共享 MCP Server
-- `%APPDATA%/Code/User/prompts/agentpet.instructions.md` — 全局 Copilot 指令
+- `~/.copilot/instructions/agentpet.instructions.md` — 用户级 Copilot instructions 文件
+
+Copilot 指令模板跟随应用资源放在 `apps/companion/public/copilot-instructions.md`，便于在打包后的 App 内直接复制到全局配置目录。

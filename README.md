@@ -18,12 +18,35 @@ Copilot Agent  --MCP (stdio)-->  MCP Server  --HTTP POST-->  Electron Companion
 ```bash
 npm install --ignore-scripts
 npm run build:companion
-npm start -w @agentpet/companion
+npm run start:companion
+```
+
+## 启动命令
+
+开发模式：
+
+```bash
+npm run dev
+```
+
+构建并启动 Companion：
+
+```bash
+npm run build:companion
+npm run start:companion
+```
+
+只启动已构建的 Companion：
+
+```bash
+npm run start -w @agentpet/companion
 ```
 
 Companion 启动后会自动注册到 VS Code 全局：
 - `%APPDATA%/Code/User/mcp.json` — MCP Server 配置
-- `%APPDATA%/Code/User/prompts/agentpet.instructions.md` — 全局 Copilot 指令
+- `~/.copilot/instructions/agentpet.instructions.md` — 用户级 Copilot instructions 文件
+
+项目内的 Copilot 指令模板存放在 `apps/companion/public/copilot-instructions.md`，Companion 启动后会从应用资源中复制到 VS Code 全局配置目录。
 
 所有项目打开后即可使用，无需每个项目单独配置。
 
@@ -33,10 +56,10 @@ Companion 启动后会自动注册到 VS Code 全局：
 
 | 状态 | 动画 | 说明 |
 |------|------|------|
-| idle | 躺在椅子上 + zzz 睡觉 | 无任务时的默认状态 |
-| active | 左右步行 | Agent 正在执行任务 |
-| completed | 坐下喝咖啡 | 任务完成，60秒后回到 idle |
-| failed | 抠动 | 任务失败，5秒后回到 idle |
+| idle | 坐着 / 趴着轮换 | 无任务时在两种空闲动作之间循环 |
+| active | 背身操作电脑 | Agent 正在执行任务时切换到工作状态 |
+| completed | 保持空闲动作轮换 + 成功气泡 | 任务完成后显示成功提示，60 秒后清除 |
+| failed | 保持空闲动作轮换 + 失败气泡 | 任务失败后显示失败提示，5 秒后清除 |
 
 ### 多动物支持
 

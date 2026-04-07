@@ -17,6 +17,12 @@ declare global {
 
 type PetPhase = 'idle' | 'active' | 'completed' | 'failed';
 
+const IDLE_ANIMATION_STATES: PetAnimationState[] = ['sitting', 'resting'];
+
+function isIdleLikeStatus(status: PetPhase) {
+  return status !== 'active';
+}
+
 const ANIMALS: { type: AnimalType; emoji: string; label: string }[] = [
   { type: 'cat', emoji: '🐱', label: '猫咪' },
   { type: 'lobster', emoji: '🦞', label: '龙虾' },
@@ -36,12 +42,6 @@ function phaseToStatus(phase: string): PetPhase {
   if (phase === 'completed') return 'completed';
   if (phase === 'failed') return 'failed';
   return 'idle';
-}
-
-function statusToPetState(status: PetPhase): PetAnimationState {
-  if (status === 'active') return 'walking';
-  if (status === 'completed' || status === 'failed') return 'resting';
-  return 'sitting';
 }
 
 function SettingsPanel() {
@@ -119,7 +119,7 @@ function SettingsPanel() {
         <div className="settings-toggle-row">
           <div className="settings-toggle-copy">
             <label htmlFor="copilot-listener-toggle">Copilot 全局监听</label>
-            <p>在 VS Code prompts 目录建立软链接</p>
+            <p>同步到用户级 Copilot instructions，指导自动调用 AgentPet MCP</p>
           </div>
           <button
             id="copilot-listener-toggle"
@@ -149,25 +149,26 @@ function SettingsPanel() {
 
 function PetView() {
   const [status, setStatus] = useState<PetPhase>('idle');
+  const [petAnimationState, setPetAnimationState] = useState<PetAnimationState>('sitting');
   const [facingRight, setFacingRight] = useState(true);
-  const [posX, setPosX] = useState(60);
   const [bubbleText, setBubbleText] = useState('');
   const [animal, setAnimal] = useState<AnimalType>('cat');
   const [petName, setPetName] = useState('');
-  const animRef = useRef<number>(0);
+  const idleCycleTimerRef = useRef<number | null>(null);
   const statusRef = useRef<PetPhase>('idle');
-  const posRef = useRef({ x: 60, dir: 1 });
+  const animationStateRef = useRef<PetAnimationState>('sitting');
+  const idleAnimationIndexRef = useRef(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const petRef = useRef<PetAnimator | null>(null);
-  const petWidth = 180;
 
   useEffect(() => { statusRef.current = status; }, [status]);
+  useEffect(() => { animationStateRef.current = petAnimationState; }, [petAnimationState]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
 
     const pet = new PetAnimator(canvasRef.current, animal);
-    pet.setState(statusToPetState(statusRef.current));
+    pet.setState(animationStateRef.current);
     pet.setFacingRight(facingRight);
     pet.start();
     petRef.current = pet;
@@ -183,7 +184,46 @@ function PetView() {
   }, []);
 
   useEffect(() => {
-    petRef.current?.setState(statusToPetState(status));
+    petRef.current?.setState(petAnimationState);
+  }, [petAnimationState]);
+
+  useEffect(() => {
+    if (idleCycleTimerRef.current !== null) {
+      window.clearInterval(idleCycleTimerRef.current);
+      idleCycleTimerRef.current = null;
+    }
+
+    if (status === 'active') {
+      setPetAnimationState('working');
+      return;
+    }
+
+    const applyIdleAnimation = (index: number) => {
+      idleAnimationIndexRef.current = index;
+      setPetAnimationState(IDLE_ANIMATION_STATES[index]);
+    };
+
+    if (!isIdleLikeStatus(status)) {
+      return;
+    }
+
+    if (!IDLE_ANIMATION_STATES.includes(animationStateRef.current)) {
+      applyIdleAnimation(idleAnimationIndexRef.current % IDLE_ANIMATION_STATES.length);
+    } else {
+      setPetAnimationState(animationStateRef.current);
+    }
+
+    idleCycleTimerRef.current = window.setInterval(() => {
+      const nextIndex = (idleAnimationIndexRef.current + 1) % IDLE_ANIMATION_STATES.length;
+      applyIdleAnimation(nextIndex);
+    }, 7000);
+
+    return () => {
+      if (idleCycleTimerRef.current !== null) {
+        window.clearInterval(idleCycleTimerRef.current);
+        idleCycleTimerRef.current = null;
+      }
+    };
   }, [status]);
 
   useEffect(() => {
@@ -207,32 +247,6 @@ function PetView() {
       setPetName(s.name);
     });
   }, []);
-
-  useEffect(() => {
-    const maxX = Math.max(8, window.innerWidth - petWidth);
-    const speed = 0.3;
-
-    function tick() {
-      const phase = statusRef.current;
-      if (phase === 'active') {
-        const p = posRef.current;
-        setFacingRight(p.dir < 0);
-        if (p.x > maxX) {
-          p.x = maxX;
-          setPosX(maxX);
-        }
-        p.x += speed * p.dir;
-        if (p.x >= maxX) { p.dir = -1; setFacingRight(false); }
-        if (p.x <= 8) { p.dir = 1; setFacingRight(true); }
-        setPosX(p.x);
-      }
-
-      animRef.current = requestAnimationFrame(tick);
-    }
-
-    animRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [petWidth]);
 
   useEffect(() => {
     if (!window.agentpet?.onNotify) return;
@@ -262,7 +276,7 @@ function PetView() {
     <div className="dock-strip">
       <div
         className={`cat animal-${animal} cat-${status}`}
-        style={{ transform: `translateX(${posX}px)` }}
+        style={{ transform: 'translateX(60px)' }}
       >
         <canvas
           ref={canvasRef}

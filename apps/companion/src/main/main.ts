@@ -1,14 +1,24 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } from 'electron';
+import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { BrowserWindow as BrowserWindowInstance, Tray as TrayInstance } from 'electron';
 import type { PetNotification, PetSettings } from '@agentpet/protocol';
 
-let mainWindow: BrowserWindow | null = null;
-let settingsWindow: BrowserWindow | null = null;
-let tray: Tray | null = null;
+// Use createRequire to avoid the ESM cjsPreparseModuleExports crash in Node.js 22 / Electron 41
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain } =
+  createRequire(import.meta.url)('electron') as typeof import('electron');
+
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
+let mainWindow: BrowserWindowInstance | null = null;
+let settingsWindow: BrowserWindowInstance | null = null;
+let tray: TrayInstance | null = null;
 let isQuitting = false;
 const currentModuleDir = dirname(fileURLToPath(import.meta.url));
 const compiledAppRoot = resolve(currentModuleDir, '../../../../../../');
@@ -29,11 +39,10 @@ const FALLBACK_INSTRUCTIONS_BODY = [
   '',
   '**每次对话开始执行编码任务时，请遵循以下流程：**',
   '',
-  '0. **首次调用前（每次对话必须执行一次）** — 使用 `tool_search` 搜索 `mcp_agentpet_notify_pet` 以加载该延迟工具。这是强制步骤，不可跳过。如果搜索结果中没有该工具，说明宠物离线，后续无需调用。',
-  '1. **任务开始前** — 调用 `notify_pet`，`phase: "started"`，用简短的中文描述任务标题',
-  '2. **切换主要步骤** — 调用 `notify_pet`，`phase: "progress"`，说明当前步骤',
-  '3. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果',
-  '4. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因',
+  '1. **任务开始前** — 直接调用 agentpet 的 `notify_pet` 工具，传入 `phase: "started"`，用简短中文描述任务标题。不要先搜索工具名。',
+  '2. **切换主要步骤** — 调用 `notify_pet`，`phase: "progress"`，说明当前步骤。',
+  '3. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果。',
+  '4. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因。',
   '',
   '## 工具参数',
   '',
@@ -48,10 +57,10 @@ const FALLBACK_INSTRUCTIONS_BODY = [
   '',
   '## 注意事项',
   '',
-  '- 当 AgentPet 桌面宠物未运行时，`notify_pet` 工具不会出现在可用工具列表中，无需调用',
-  '- 如果调用 `notify_pet` 返回“萌宠离线”，则本次任务后续不再调用该工具',
-  '- `title` 使用中文，简洁明了',
-  '- 不需要等待工具返回结果再继续执行任务',
+  '- 如果当前会话没有看到 `notify_pet` 工具，说明 MCP 尚未加载或当前环境不可用，此时无需反复重试。',
+  '- 如果调用 `notify_pet` 返回“萌宠离线”，则本次任务后续无需再调用该工具。',
+  '- `title` 使用中文，简洁明了。',
+  '- 不需要等待工具返回结果再继续执行任务。',
   '',
   '## 重要：必须调用的时机',
   '',
@@ -151,8 +160,12 @@ function getProjectRoot(): string {
   return resolve(compiledAppRoot, '../..');
 }
 
-function getInstructionsLinkPath(): string {
+function getLegacyInstructionsPath(): string {
   return join(getVSCodeUserDir(), 'prompts', 'agentpet.instructions.md');
+}
+
+function getInstructionsTargetPath(): string {
+  return join(homedir(), '.copilot', 'instructions', 'agentpet.instructions.md');
 }
 
 function getManagedInstructionsSourcePath(): string {
@@ -161,10 +174,11 @@ function getManagedInstructionsSourcePath(): string {
 
 function resolveInstructionsTemplatePath(): string | null {
   const candidates = [
-    join(getProjectRoot(), '.github', 'copilot-instructions.md'),
-    join(app.getAppPath(), '.github', 'copilot-instructions.md'),
-    join(resolve(app.getAppPath(), '..'), '.github', 'copilot-instructions.md'),
-    join(resolve(app.getAppPath(), '../..'), '.github', 'copilot-instructions.md'),
+    resolveAppAssetPath('dist/renderer/copilot-instructions.md', 'apps/companion/public/copilot-instructions.md'),
+    join(getProjectRoot(), 'apps/companion/public/copilot-instructions.md'),
+    join(app.getAppPath(), 'public', 'copilot-instructions.md'),
+    join(resolve(app.getAppPath(), '..'), 'public', 'copilot-instructions.md'),
+    join(resolve(app.getAppPath(), '../..'), 'public', 'copilot-instructions.md'),
   ];
 
   for (const candidate of candidates) {
@@ -196,24 +210,22 @@ function ensureManagedInstructionsSourceFile(): string {
 }
 
 function disableCopilotInstructionsLink(): void {
-  const linkPath = getInstructionsLinkPath();
-  rmSync(linkPath, { force: true });
+  rmSync(getInstructionsTargetPath(), { force: true });
+  rmSync(getLegacyInstructionsPath(), { force: true });
 }
 
 function enableCopilotInstructionsLink(): void {
-  const linkPath = getInstructionsLinkPath();
-  const promptsDir = dirname(linkPath);
   const sourcePath = ensureManagedInstructionsSourceFile();
-
-  mkdirSync(promptsDir, { recursive: true });
+  const targetPath = getInstructionsTargetPath();
   disableCopilotInstructionsLink();
 
   try {
-    copyFileSync(sourcePath, linkPath);
-    console.log('[agentpet] Global instructions copied:', linkPath, '<-', sourcePath);
+    mkdirSync(dirname(targetPath), { recursive: true });
+    copyFileSync(sourcePath, targetPath);
+    console.log('[agentpet] Global instructions copied:', targetPath, '<-', sourcePath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`复制 VS Code 全局指令文件失败：${message}`);
+    throw new Error(`复制 VS Code 全局指令文件失败（${targetPath}）：${message}`);
   }
 }
 
@@ -224,7 +236,7 @@ function syncCopilotInstructionsLink(enabled: boolean): void {
   }
 
   disableCopilotInstructionsLink();
-  console.log('[agentpet] Global instructions link removed:', getInstructionsLinkPath());
+  console.log('[agentpet] Global instructions removed:', [getInstructionsTargetPath(), getLegacyInstructionsPath()].join(', '));
 }
 
 function registerGlobal(): void {
@@ -247,7 +259,7 @@ function registerGlobal(): void {
   }
 }
 
-function createPetWindow(): BrowserWindow {
+function createPetWindow(): BrowserWindowInstance {
   const preloadPath = resolveAppAssetPath('dist/preload/preload.js', 'dist/preload/apps/companion/src/preload/preload.js');
   const iconPath = resolveAppAssetPath('dist/renderer/agentpet.png', 'public/agentpet.png');
 
@@ -308,7 +320,7 @@ function createPetWindow(): BrowserWindow {
   return win;
 }
 
-function createTray(): Tray {
+function createTray(): TrayInstance {
   const iconPath = resolveAppAssetPath('dist/renderer/agentpet-tray.png', 'public/agentpet-tray.png', 'dist/renderer/agentpet.png', 'public/agentpet.png');
   const scaleFactor = screen.getPrimaryDisplay().scaleFactor || 1;
   const traySize = Math.max(20, Math.round(20 * scaleFactor));
@@ -384,6 +396,10 @@ function createEventServer(): void {
 }
 
 app.whenReady().then(() => {
+  if (!hasSingleInstanceLock) {
+    return;
+  }
+
   registerGlobal();
   const initialSettings = loadSettings();
 
@@ -421,6 +437,16 @@ app.whenReady().then(() => {
     if (!mainWindow) mainWindow = createPetWindow();
     mainWindow.show();
   });
+});
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    mainWindow.showInactive();
+  }
+
+  if (settingsWindow) {
+    settingsWindow.focus();
+  }
 });
 
 app.on('before-quit', () => { isQuitting = true; });

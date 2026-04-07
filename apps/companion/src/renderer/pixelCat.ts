@@ -1,6 +1,6 @@
 import type { AnimalType } from '@agentpet/protocol';
 
-export type PetAnimationState = 'sitting' | 'walking' | 'resting';
+export type PetAnimationState = 'sitting' | 'walking' | 'resting' | 'working';
 
 interface Colors {
   body: string;
@@ -15,6 +15,8 @@ const SIZE = {
   width: 180,
   height: 140,
 };
+
+const FRAME_INTERVAL_MS = 1000 / 30;
 
 const PALETTES: Record<AnimalType, Colors> = {
   cat: {
@@ -113,6 +115,11 @@ export class PetAnimator {
       this.lastTimestamp = timestamp;
     }
 
+    if (timestamp - this.lastTimestamp < FRAME_INTERVAL_MS) {
+      this.frameHandle = requestAnimationFrame(this.loop);
+      return;
+    }
+
     const delta = Math.min((timestamp - this.lastTimestamp) / 1000, 0.05);
     this.lastTimestamp = timestamp;
     this.elapsed += delta;
@@ -153,6 +160,8 @@ export class PetAnimator {
   private drawCat() {
     if (this.state === 'walking') {
       this.drawCatWalking();
+    } else if (this.state === 'working') {
+      this.drawCatWorking();
     } else if (this.state === 'resting') {
       this.drawCatResting();
     } else {
@@ -163,6 +172,8 @@ export class PetAnimator {
   private drawLobster() {
     if (this.state === 'walking') {
       this.drawLobsterWalking();
+    } else if (this.state === 'working') {
+      this.drawLobsterWorking();
     } else if (this.state === 'resting') {
       this.drawLobsterResting();
     } else {
@@ -190,24 +201,29 @@ export class PetAnimator {
 
   private drawCatWalking() {
     const ctx = this.ctx;
-    const pace = this.elapsed * 6.5;
-    const bob = Math.sin(pace) * 3;
-    const diagonalA = Math.sin(pace) * 10;
-    const diagonalB = Math.sin(pace + Math.PI) * 10;
-    const tailJitter = Math.sin(this.elapsed * 16) * 3;
+    const pace = this.elapsed * 7.2;
+    const strideFront = Math.sin(pace) * 12;
+    const strideBack = Math.sin(pace + Math.PI) * 10;
+    const liftFront = Math.max(0, Math.sin(pace + Math.PI / 2)) * 8;
+    const liftBack = Math.max(0, Math.sin(pace + Math.PI / 2 + Math.PI)) * 7;
+    const bob = Math.sin(pace * 2) * 1.8;
+    const bodyTilt = Math.sin(pace) * 0.04;
+    const bodyStretch = 1 + Math.sin(pace) * 0.04;
+    const headNod = Math.sin(pace + 0.45) * 1.2;
+    const tailSway = Math.sin(pace * 0.9 + 0.8) * 6;
 
-    this.drawShadow(98, 118, 37, 8);
-    this.drawTail(125, 86 + bob, 10, -40, tailJitter, 0.28, this.colors.body, this.colors.body, 10);
+    this.drawShadow(103, 118, 42, 8);
+    this.drawTail(138, 82 + bob, 6, -42, tailSway, 0.26, this.colors.body, null, 8);
 
     ctx.save();
     ctx.translate(0, bob);
-    this.drawCatWalkingLeg(74, 90, diagonalA);
-    this.drawCatWalkingLeg(92, 90, diagonalB);
-    this.drawCatWalkingLeg(108, 90, diagonalA);
-    this.drawCatWalkingLeg(124, 90, diagonalB);
-    this.drawCatHorizontalBody(101, 80, 34, 24);
-    this.drawCatCollar(70, 70, Math.sin(pace) * 0.05 + 0.5);
-    this.drawCatHead(64, 56, { eyesClosed: false, smile: false, tilt: Math.sin(pace) * 0.05 });
+    this.drawCatWalkingLeg(87, 84, strideBack, liftBack, false);
+    this.drawCatWalkingLeg(111, 85, strideFront, liftFront, true);
+    this.drawCatWalkingLeg(129, 86, -strideBack * 0.9, Math.max(0, liftBack - 1.2), false);
+    this.drawCatWalkingLeg(149, 87, -strideFront * 0.9, Math.max(0, liftFront - 1.2), true);
+    this.drawCatWalkingBody(116, 79, 40 * bodyStretch, 20, bodyTilt);
+    this.drawCatCollar(79, 68 + headNod * 0.16, bodyTilt + 0.28);
+    this.drawCatWalkingHead(68, 58 + headNod, bodyTilt + 0.02);
     ctx.restore();
   }
 
@@ -223,6 +239,30 @@ export class PetAnimator {
     this.drawCurledTail(116, 95, 20, 16, this.colors.body, this.colors.body);
     this.drawCatRestingBody(92, 98, 40, 18, breathe);
     this.drawCatHead(64, 88 - headLift, { eyesClosed: true, smile: false, sleepy: true, tilt: -0.08 });
+    ctx.restore();
+  }
+
+  private drawCatWorking() {
+    const ctx = this.ctx;
+    const breathe = Math.sin(this.elapsed * 2.1) * 0.8;
+    const typing = Math.sin(this.elapsed * 10.5);
+    const pawLiftLeft = Math.max(0, typing) * 2.2;
+    const pawLiftRight = Math.max(0, -typing) * 2.2;
+    const headDip = Math.sin(this.elapsed * 2.8) * 0.9;
+    const tailSway = Math.sin(this.elapsed * 2) * 3.4;
+
+    this.drawShadow(94, 120, 44, 8);
+    this.drawLaptop(111, 88, 70, 42, 0.12, '#6c7a89', '#18212c', '#8fe3ff');
+    this.drawTail(57, 109, -10, -25, tailSway, 0.24, this.colors.body, this.colors.body, 7);
+
+    ctx.save();
+    ctx.translate(0, breathe * 0.45);
+    this.drawCatWorkingBody(78, 94, 26, 31);
+    this.drawCatWorkingBackHead(80, 65 + headDip);
+    this.drawCatTypingPaw(96, 97 - pawLiftLeft, 11, 6, -0.1);
+    this.drawCatTypingPaw(109, 98 - pawLiftRight, 11, 6, 0.08);
+    this.drawCatTypingPaw(68, 114, 11, 7, 0.14);
+    this.drawCatTypingPaw(84, 114, 11, 7, -0.06);
     ctx.restore();
   }
 
@@ -280,6 +320,20 @@ export class PetAnimator {
     this.drawLobsterAntennae(92, 55, antennaDrop, true);
   }
 
+  private drawLobsterWorking() {
+    const bob = Math.sin(this.elapsed * 3) * 1.4;
+    const claw = Math.sin(this.elapsed * 10) * 0.08;
+
+    this.drawShadow(96, 119, 34, 8);
+    this.drawLaptop(107, 91, 64, 40, 0.12, '#7b8899', '#17202b', '#8fe3ff');
+    this.drawLobsterClaw(72, 92 + bob, -0.2 + claw, false);
+    this.drawLobsterClaw(104, 92 + bob, 0.18 - claw, true);
+    this.drawLobsterBody(82, 92 + bob, 0.88);
+    this.drawLobsterHead(82, 72 + bob, false);
+    this.drawLobsterTail(82, 109 + bob, Math.sin(this.elapsed * 4) * 1.2, 0.03);
+    this.drawLobsterAntennae(82, 57 + bob, Math.sin(this.elapsed * 5) * 1.5, false);
+  }
+
   private drawShadow(x: number, y: number, rx: number, ry: number) {
     const ctx = this.ctx;
     ctx.save();
@@ -310,6 +364,57 @@ export class PetAnimator {
     ctx.restore();
   }
 
+  private drawLaptop(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    tilt: number,
+    baseColor: string,
+    screenColor: string,
+    glowColor: string,
+  ) {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    ctx.fillStyle = baseColor;
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.46, 10, width, 10, 4);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-width * 0.5, 17);
+    ctx.lineTo(width * 0.48, 17);
+    ctx.lineTo(width * 0.33, 24);
+    ctx.lineTo(-width * 0.38, 24);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(-width * 0.12, 10);
+    ctx.rotate(-tilt);
+    ctx.fillStyle = '#27303b';
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.38, -height, width * 0.76, height, 6);
+    ctx.fill();
+
+    ctx.fillStyle = screenColor;
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.31, -height + 6, width * 0.62, height - 12, 4);
+    ctx.fill();
+
+    ctx.fillStyle = glowColor;
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.28, -height + 10, width * 0.56, 6, 3);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  }
+
   private drawTail(
     baseX: number,
     baseY: number,
@@ -318,7 +423,7 @@ export class PetAnimator {
     sway: number,
     curl: number,
     mainColor: string,
-    stripeColor: string,
+    stripeColor: string | null,
     width = 13,
   ) {
     const ctx = this.ctx;
@@ -334,12 +439,14 @@ export class PetAnimator {
     ctx.bezierCurveTo(baseX + 14, baseY - 8, baseX + riseX * 0.55, baseY + riseY * 0.55, tipX, tipY);
     ctx.stroke();
 
-    ctx.strokeStyle = stripeColor;
-    ctx.lineWidth = Math.max(4, width * 0.38);
-    ctx.beginPath();
-    ctx.moveTo(baseX + 6, baseY - 3);
-    ctx.bezierCurveTo(baseX + 16, baseY - 8, baseX + riseX * 0.6, baseY + riseY * 0.58, tipX + curl * 18, tipY + 3);
-    ctx.stroke();
+    if (stripeColor) {
+      ctx.strokeStyle = stripeColor;
+      ctx.lineWidth = Math.max(4, width * 0.38);
+      ctx.beginPath();
+      ctx.moveTo(baseX + 6, baseY - 3);
+      ctx.bezierCurveTo(baseX + 16, baseY - 8, baseX + riseX * 0.6, baseY + riseY * 0.58, tipX + curl * 18, tipY + 3);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -415,6 +522,208 @@ export class PetAnimator {
 
   private drawCatHorizontalBody(x: number, y: number, w: number, h: number) {
     this.drawEllipseFill(x, y, w, h, this.colors.body, 0);
+  }
+
+  private drawCatWalkingBody(x: number, y: number, w: number, h: number, tilt: number) {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.moveTo(-w, 2);
+    ctx.quadraticCurveTo(-w * 0.98, -h * 0.95, -w * 0.28, -h * 1.04);
+    ctx.quadraticCurveTo(w * 0.4, -h * 1.02, w * 0.98, -h * 0.4);
+    ctx.quadraticCurveTo(w * 1.12, h * 0.08, w * 0.92, h * 0.6);
+    ctx.quadraticCurveTo(w * 0.26, h * 1.02, -w * 0.56, h * 0.88);
+    ctx.quadraticCurveTo(-w * 1.02, h * 0.66, -w, 2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = this.colors.light;
+    ctx.beginPath();
+    ctx.ellipse(-w * 0.08, h * 0.24, w * 0.4, h * 0.42, -0.04, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  private drawCatWalkingHead(x: number, y: number, tilt: number) {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.moveTo(18, -10);
+    ctx.quadraticCurveTo(10, -23, -2, -20);
+    ctx.quadraticCurveTo(-12, -17, -19, -11);
+    ctx.quadraticCurveTo(-29, -3, -28, 4);
+    ctx.quadraticCurveTo(-27, 11, -18, 14);
+    ctx.quadraticCurveTo(-6, 18, 10, 16);
+    ctx.quadraticCurveTo(19, 11, 20, 1);
+    ctx.quadraticCurveTo(20, -5, 18, -10);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(10, -12);
+    ctx.lineTo(15, -34);
+    ctx.lineTo(2, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-1, -14);
+    ctx.lineTo(2, -31);
+    ctx.lineTo(-8, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.moveTo(9, -14);
+    ctx.lineTo(12, -28);
+    ctx.lineTo(4, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(1, -25);
+    ctx.lineTo(-5, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = this.colors.light;
+    ctx.beginPath();
+    ctx.moveTo(-8, 1);
+    ctx.quadraticCurveTo(-18, 0, -24, 5);
+    ctx.quadraticCurveTo(-20, 13, -11, 14);
+    ctx.quadraticCurveTo(-2, 14, 4, 9);
+    ctx.quadraticCurveTo(0, 2, -8, 1);
+    ctx.fill();
+
+    ctx.fillStyle = '#000000';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(-6, -2, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(-7, -3, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#e59fa2';
+    ctx.beginPath();
+    ctx.moveTo(-20, 7);
+    ctx.lineTo(-15, 5);
+    ctx.lineTo(-15, 9);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = this.colors.line;
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-16, 8);
+    ctx.lineTo(-12, 10);
+    ctx.lineTo(-10, 12);
+    ctx.moveTo(-15, 7);
+    ctx.lineTo(-27, 4);
+    ctx.moveTo(-15, 9);
+    ctx.lineTo(-29, 10);
+    ctx.moveTo(-14, 11);
+    ctx.lineTo(-25, 16);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  private drawCatWorkingBody(x: number, y: number, w: number, h: number) {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.9, h * 0.95);
+    ctx.quadraticCurveTo(-w * 1.18, h * 0.18, -w * 0.62, -h * 0.78);
+    ctx.quadraticCurveTo(0, -h * 1.18, w * 0.62, -h * 0.78);
+    ctx.quadraticCurveTo(w * 1.18, h * 0.18, w * 0.9, h * 0.95);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = this.colors.light;
+    ctx.beginPath();
+    ctx.ellipse(0, -1, w * 0.34, h * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = this.colors.accent;
+    ctx.beginPath();
+    ctx.roundRect(-w * 0.4, -h * 0.72, w * 0.8, 5, 3);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  private drawCatWorkingBackHead(x: number, y: number) {
+    const ctx = this.ctx;
+
+    ctx.save();
+    ctx.translate(x, y);
+
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.moveTo(0, -21);
+    ctx.quadraticCurveTo(16, -21, 20, -6);
+    ctx.quadraticCurveTo(21, 10, 0, 17);
+    ctx.quadraticCurveTo(-21, 10, -20, -6);
+    ctx.quadraticCurveTo(-16, -21, 0, -21);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-13, -10);
+    ctx.lineTo(-21, -33);
+    ctx.lineTo(-3, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(13, -10);
+    ctx.lineTo(21, -33);
+    ctx.lineTo(3, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#1a1a1a';
+    ctx.beginPath();
+    ctx.moveTo(-12, -13);
+    ctx.lineTo(-18, -28);
+    ctx.lineTo(-6, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(12, -13);
+    ctx.lineTo(18, -28);
+    ctx.lineTo(6, -18);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = this.colors.light;
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   private drawCatRestingBody(x: number, y: number, w: number, h: number, breathe: number) {
@@ -575,22 +884,39 @@ export class PetAnimator {
     // left empty, using drawCatSittingPaws instead
   }
 
-  private drawCatWalkingLeg(x: number, y: number, swing: number, front: boolean = true) {
+  private drawCatTypingPaw(x: number, y: number, width: number, height: number, rotation: number) {
     const ctx = this.ctx;
-    const footY = y + 28 - Math.max(swing, 0) * 0.2;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.roundRect(-width / 2, -height / 2, width, height, 4);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  private drawCatWalkingLeg(x: number, y: number, swing: number, lift: number, front: boolean = true) {
+    const ctx = this.ctx;
+    const kneeX = x + swing * (front ? 0.24 : 0.18);
+    const kneeY = y + 13 - lift * 0.45;
+    const footX = x + swing * (front ? 0.66 : 0.58);
+    const footY = y + 29 - lift;
+    const legWidth = front ? 8 : 7;
 
     ctx.save();
     ctx.strokeStyle = this.colors.body;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = legWidth;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x + swing * 0.32, y + 13, x + swing, footY);
+    ctx.quadraticCurveTo(kneeX, kneeY, footX, footY);
     ctx.stroke();
 
     ctx.fillStyle = this.colors.light;
     ctx.beginPath();
-    ctx.roundRect(x + swing - 6, footY - 1, 12, 8, 4);
+    ctx.roundRect(footX - 6, footY - 1, 12, 7, 4);
     ctx.fill();
     ctx.restore();
   }
