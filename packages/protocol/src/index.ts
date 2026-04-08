@@ -7,7 +7,7 @@ export interface PetSettings {
 }
 
 export interface PetNotification {
-  phase: 'started' | 'progress' | 'completed' | 'failed';
+  phase: 'started' | 'progress' | 'completed' | 'failed' | 'idle';
   title: string;
   detail?: string;
   agentName?: string;

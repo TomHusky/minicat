@@ -21,6 +21,7 @@ let settingsWindow: BrowserWindowInstance | null = null;
 let tray: TrayInstance | null = null;
 let isQuitting = false;
 let userActivityMonitorTimer: NodeJS.Timeout | null = null;
+let activeTaskLeaseTimer: NodeJS.Timeout | null = null;
 let isUserActive = true;
 const currentModuleDir = dirname(fileURLToPath(import.meta.url));
 const compiledAppRoot = resolve(currentModuleDir, '../../../../../../');
@@ -32,6 +33,7 @@ const SETTINGS_HEIGHT = 420;
 const TASKBAR_GAP = 4;
 const USER_IDLE_THRESHOLD_SECONDS = 60;
 const USER_IDLE_POLL_INTERVAL_MS = 5000;
+const ACTIVE_TASK_LEASE_MS = 2 * 60 * 1000;
 const DEFAULT_SETTINGS: PetSettings = { animal: 'cat', name: '', copilotListenerEnabled: true };
 const GLOBAL_INSTRUCTIONS_FRONTMATTER = ['---', 'applyTo: "**"', '---', ''].join('\n');
 const FALLBACK_INSTRUCTIONS_BODY = [
@@ -45,8 +47,9 @@ const FALLBACK_INSTRUCTIONS_BODY = [
   '',
   '1. **任务开始前** — 直接调用 agentpet 的 `notify_pet` 工具，传入 `phase: "started"`，用简短中文描述任务标题。不要先搜索工具名。',
   '2. **切换主要步骤** — 调用 `notify_pet`，`phase: "progress"`，说明当前步骤。',
-  '3. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果。',
-  '4. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因。',
+  '3. **长任务持续汇报** — 如果连续搜索、读文件、运行多步命令、等待较久或持续编码超过 30-60 秒，必须再次调用 `notify_pet` 并传入 `phase: "progress"`，更新当前步骤，不能只在开始时通知一次。',
+  '4. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果。',
+  '5. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因。',
   '',
   '## 工具参数',
   '',
@@ -145,6 +148,39 @@ function resolveAppAssetPath(...relativeCandidates: string[]): string {
 
 function broadcast(notification: PetNotification): void {
   mainWindow?.webContents.send('agentpet:notify', notification);
+}
+
+function clearActiveTaskLease(): void {
+  if (!activeTaskLeaseTimer) {
+    return;
+  }
+
+  clearTimeout(activeTaskLeaseTimer);
+  activeTaskLeaseTimer = null;
+}
+
+function scheduleActiveTaskLease(): void {
+  clearActiveTaskLease();
+  activeTaskLeaseTimer = setTimeout(() => {
+    activeTaskLeaseTimer = null;
+    console.log('[agentpet] Active task lease expired, resetting pet to idle');
+    broadcast({
+      phase: 'idle',
+      title: '',
+      detail: '长时间未收到 Copilot Chat 更新，已自动恢复待机。',
+      agentName: 'agentpet',
+    });
+  }, ACTIVE_TASK_LEASE_MS);
+}
+
+function handleNotification(notification: PetNotification): void {
+  if (notification.phase === 'started' || notification.phase === 'progress') {
+    scheduleActiveTaskLease();
+  } else {
+    clearActiveTaskLease();
+  }
+
+  broadcast(notification);
 }
 
 function detectIsUserActive(): boolean {
@@ -418,7 +454,7 @@ function handleHttpRequest(req: import('node:http').IncomingMessage, res: import
     try {
       const notification = JSON.parse(body || '{}') as PetNotification;
       if (notification.phase && notification.title) {
-        broadcast(notification);
+        handleNotification(notification);
       }
     } catch {
       // malformed payload
@@ -500,6 +536,7 @@ app.on('second-instance', () => {
 app.on('before-quit', () => {
   isQuitting = true;
   stopUserActivityMonitor();
+  clearActiveTaskLease();
 
   try {
     syncCopilotInstructionsLink(false);

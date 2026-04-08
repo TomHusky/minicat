@@ -8,8 +8,9 @@
 
 1. **任务开始前** — 直接调用 agentpet 的 `notify_pet` 工具，传入 `phase: "started"`，用简短中文描述任务标题。不要先搜索工具名。
 2. **切换主要步骤** — 调用 `notify_pet`，`phase: "progress"`，说明当前步骤。
-3. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果。
-4. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因。
+3. **长任务持续汇报** — 如果连续搜索、读文件、运行多步命令、等待较久或持续编码超过 30-60 秒，必须再次调用 `notify_pet` 并传入 `phase: "progress"`，更新当前步骤，不能只在开始时通知一次。
+4. **任务完成** — 调用 `notify_pet`，`phase: "completed"`，简要总结结果。
+5. **出现错误** — 调用 `notify_pet`，`phase: "failed"`，说明失败原因。
 
 ## 工具参数
 

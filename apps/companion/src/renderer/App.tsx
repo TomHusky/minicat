@@ -41,6 +41,7 @@ function phaseToStatus(phase: string): PetPhase {
   if (phase === 'started' || phase === 'progress') return 'active';
   if (phase === 'completed') return 'completed';
   if (phase === 'failed') return 'failed';
+  if (phase === 'idle') return 'idle';
   return 'idle';
 }
 
@@ -145,11 +146,23 @@ function PetView() {
   const [isUserActive, setIsUserActive] = useState(true);
   const statusRef = useRef<PetPhase>('idle');
   const animationStateRef = useRef<PetAnimationState>('sitting');
+  const resetTimerRef = useRef<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const petRef = useRef<PetAnimator | null>(null);
 
+  const clearStatusResetTimer = useCallback(() => {
+    if (resetTimerRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = null;
+  }, []);
+
   useEffect(() => { statusRef.current = status; }, [status]);
   useEffect(() => { animationStateRef.current = petAnimationState; }, [petAnimationState]);
+
+  useEffect(() => clearStatusResetTimer, [clearStatusResetTimer]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -225,26 +238,36 @@ function PetView() {
   useEffect(() => {
     if (!window.agentpet?.onNotify) return;
     return window.agentpet.onNotify(notification => {
+      clearStatusResetTimer();
       const petPhase = phaseToStatus(notification.phase);
+
+      if (petPhase === 'idle') {
+        setStatus('idle');
+        setBubbleText('');
+        return;
+      }
+
       setStatus(petPhase);
       const text = notification.title || '';
       if (petPhase === 'active') {
         setBubbleText(text);
       } else if (petPhase === 'completed') {
         setBubbleText('✅ ' + text);
-        setTimeout(() => {
+        resetTimerRef.current = window.setTimeout(() => {
           setStatus(prev => prev === 'completed' ? 'idle' : prev);
           setBubbleText('');
+          resetTimerRef.current = null;
         }, 60000);
       } else if (petPhase === 'failed') {
         setBubbleText('❌ ' + text);
-        setTimeout(() => {
+        resetTimerRef.current = window.setTimeout(() => {
           setStatus(prev => prev === 'failed' ? 'idle' : prev);
           setBubbleText('');
+          resetTimerRef.current = null;
         }, 5000);
       }
     });
-  }, []);
+  }, [clearStatusResetTimer]);
 
   return (
     <div className="dock-strip">
