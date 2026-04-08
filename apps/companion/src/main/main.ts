@@ -182,6 +182,15 @@ function stopUserActivityMonitor(): void {
   userActivityMonitorTimer = null;
 }
 
+function getAppIconPath(): string {
+  return resolveAppAssetPath(
+    'dist/renderer/agentpet.png',
+    'public/agentpet.png',
+    'dist/renderer/agentpet-tray.png',
+    'public/agentpet-tray.png',
+  );
+}
+
 // ── VS Code global registration ───────────────────────────────────────────
 function getVSCodeUserDir(): string {
   const home = homedir();
@@ -435,6 +444,10 @@ function createEventServer(): void {
 app.whenReady().then(() => {
   if (!hasSingleInstanceLock) {
     return;
+  }
+
+  if (process.platform === 'darwin') {
+    app.dock?.setIcon(nativeImage.createFromPath(getAppIconPath()));
   }
 
   registerGlobal();

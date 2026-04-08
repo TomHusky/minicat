@@ -259,7 +259,9 @@ function PetView() {
         
         <div className="cat-overlay">
           {bubbleText && (
-            <div className={`bubble bubble-${status}`}>{bubbleText}</div>
+            <div className={`bubble bubble-${status}`}>
+              <span className="bubble-label">{bubbleText}</span>
+            </div>
           )}
           {!bubbleText && petName && status === 'idle' && (
             <div className="pet-name">{petName}</div>

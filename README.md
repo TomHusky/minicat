@@ -36,10 +36,10 @@ npm run build:companion
 npm run start:companion
 ```
 
-只启动已构建的 Companion：
+只在 companion workspace 内执行类型检查：
 
 ```bash
-npm run start -w @agentpet/companion
+npm run typecheck -w @agentpet/companion
 ```
 
 Companion 启动后会自动注册到 VS Code 全局：
@@ -61,17 +61,14 @@ Companion 启动后会自动注册到 VS Code 全局：
 | completed | 保持空闲动作轮换 + 成功气泡 | 任务完成后显示成功提示，60 秒后清除 |
 | failed | 保持空闲动作轮换 + 失败气泡 | 任务失败后显示失败提示，5 秒后清除 |
 
-### 多动物支持
+### 动物与设置
 
-通过系统托盘右键菜单 > “设置” 可以选择不同的动物和给宠物命名：
+通过系统托盘右键菜单 > “设置” 可以切换当前支持的动物：
 
 - 🐱 猫咪（默认）
-- 🐶 狗狗
 - 🦞 龙虾
-- 🐧 企鹅
-- 🐼 熊猫
 
-设置会持久化保存，重启后保留。
+设置会持久化保存，重启后保留。当前版本的设置面板只暴露动物选择；Copilot 全局监听会在 Companion 运行期间自动启用，并在退出时自动清理。
 
 ## 目录结构
 

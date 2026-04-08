@@ -20,12 +20,12 @@ Copilot Agent  --MCP (stdio)-->  MCP Server  --HTTP POST-->  Electron Companion
 
 ### apps/companion
 
-- 透明、无边框、始终置顶的 Electron 窗口 (300×140)
+- 透明、无边框、始终置顶的 Electron 窗口 (300×192)
 - Windows: 定位在右下角系统托盘上方；macOS: 定位在 dock 居中上方
 - HTTP 服务器监听 `/notify`（接收通知）和 `/ping`（健康检查）
 - 启动时自动注册到 VS Code 全局 mcp.json，并同步用户级 Copilot instructions 文件；退出时自动删除该 instructions 文件
-- 设置窗口：独立 BrowserWindow (400×460)，通过 URL hash `#settings` 区分
-- 设置持久化：保存到 `app.getPath('userData')/settings.json`
+- 设置窗口：独立 BrowserWindow (380×420)，通过 URL hash `#settings` 区分
+- 设置持久化：保存到 `app.getPath('userData')/settings.json`，当前仅支持动物选择，Copilot 监听默认开启
 
 ### packages/protocol
 
@@ -45,11 +45,12 @@ interface PetNotification {
 ## 设置模型
 
 ```typescript
-type AnimalType = 'cat' | 'dog' | 'lobster';
+type AnimalType = 'cat' | 'lobster';
 
 interface PetSettings {
   animal: AnimalType;
   name: string;
+  copilotListenerEnabled: boolean;
 }
 ```
 
@@ -64,8 +65,8 @@ idle (坐着 / 睡觉) <-------- (始终回归这里)
 
 ## 窗口架构
 
-- **宠物窗口**：transparent + frameless，始终保持 300×140，鼠标穿透
-- **设置窗口**：独立的正常窗口 400×460，确保不干扰宠物窗口的透明度
+- **宠物窗口**：transparent + frameless，始终保持 300×192，鼠标穿透
+- **设置窗口**：独立的正常窗口 380×420，确保不干扰宠物窗口的透明度
 - 两个窗口加载同一个 HTML，通过 `#settings` hash 路由到不同组件
 
 ## 全局注册

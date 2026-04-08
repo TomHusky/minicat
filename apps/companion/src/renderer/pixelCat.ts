@@ -32,7 +32,7 @@ const PALETTES: Record<AnimalType, Colors> = {
     dark: '#c84828',
     light: '#ffb37d',
     line: '#822c1f',
-    accent: '#ffd1b6',
+    accent: '#ffe1cb',
     shadow: 'rgba(120, 48, 34, 0.18)',
   },
 };
@@ -279,59 +279,418 @@ export class PetAnimator {
 
   private drawLobsterSitting() {
     const wiggle = Math.sin(this.elapsed * 1.5) * 2;
-    const claw = Math.sin(this.elapsed * 1.7) * 0.1;
+    const clawSwing = Math.sin(this.elapsed * 1.7) * 0.08;
+    const eyeOpen = this.getLobsterBlinkOpen();
+    const cx = 92;
 
-    this.drawShadow(94, 119, 28, 8);
-    this.drawLobsterClaw(64, 86, -0.25 + claw, false);
-    this.drawLobsterClaw(108, 86, 0.25 - claw, true);
-    this.drawLobsterBody(92, 88, 1);
-    this.drawLobsterHead(92, 68, false);
-    this.drawLobsterTail(92, 107, wiggle, 0.03);
-    this.drawLobsterLegs(92, 105, 1, false);
-    this.drawLobsterAntennae(92, 52, wiggle, false);
+    this.drawShadow(cx, 120, 30, 7);
+    this.drawLobsterTailFan(cx, 124, wiggle);
+    this.drawLobsterSegmentedBody(cx, 72, 1, true);
+    this.drawLobsterSmallLegs(cx, 82, 0);
+    this.drawLobsterArm(cx, 72, -1, clawSwing);
+    this.drawLobsterArm(cx, 72, 1, -clawSwing);
+    this.drawLobsterHead(cx, 56, eyeOpen);
+    this.drawLobsterAntennae(cx, 42, wiggle, false);
   }
 
   private drawLobsterWalking() {
     const pace = this.elapsed * 7;
     const bob = Math.sin(pace) * 2;
-    const claw = Math.sin(pace) * 0.14;
+    const clawSwing = Math.sin(pace) * 0.12;
+    const eyeOpen = this.getLobsterBlinkOpen();
+    const cx = 92;
 
-    this.drawShadow(94, 119, 30, 8);
-    this.drawLobsterClaw(64, 86 + bob, -0.35 + claw, false);
-    this.drawLobsterClaw(108, 86 + bob, 0.35 - claw, true);
-    this.drawLobsterBody(92, 88 + bob, 0.98);
-    this.drawLobsterHead(92, 68 + bob, false);
-    this.drawLobsterTail(92, 107 + bob, Math.sin(pace) * 2, 0.08);
-    this.drawLobsterLegs(92, 105 + bob, Math.sin(pace) * 4, true);
-    this.drawLobsterAntennae(92, 52 + bob, Math.sin(this.elapsed * 10) * 3, false);
+    this.drawShadow(cx, 120, 32, 7);
+    this.drawLobsterTailFan(cx, 124 + bob, Math.sin(pace) * 3);
+    this.drawLobsterSegmentedBody(cx, 72 + bob, 0.98, true);
+    this.drawLobsterSmallLegs(cx, 82 + bob, pace);
+    this.drawLobsterArm(cx, 72 + bob, -1, clawSwing);
+    this.drawLobsterArm(cx, 72 + bob, 1, -clawSwing);
+    this.drawLobsterHead(cx, 56 + bob, eyeOpen);
+    this.drawLobsterAntennae(cx, 42 + bob, Math.sin(this.elapsed * 10) * 3, false);
   }
 
   private drawLobsterResting() {
     const breathe = 1 + Math.sin(this.elapsed * 1.6) * 0.03;
     const antennaDrop = Math.sin(this.elapsed * 1.6) * 1.2;
+    const cx = 92;
 
-    this.drawShadow(94, 119, 29, 8);
-    this.drawLobsterClaw(66, 91, -0.12, false);
-    this.drawLobsterClaw(106, 91, 0.12, true);
-    this.drawLobsterBody(92, 90, breathe);
-    this.drawLobsterHead(92, 71, true);
-    this.drawLobsterTail(92, 108, 0, 0.02);
-    this.drawLobsterLegs(92, 107, 1, false);
-    this.drawLobsterAntennae(92, 55, antennaDrop, true);
+    this.drawShadow(cx, 120, 30, 7);
+    this.drawLobsterTailFan(cx, 126, 0);
+    this.drawLobsterSegmentedBody(cx, 72, breathe, true);
+    this.drawLobsterSmallLegs(cx, 82, 0);
+    this.drawLobsterArm(cx, 72, -1, 0);
+    this.drawLobsterArm(cx, 72, 1, 0);
+    this.drawLobsterHead(cx, 56, 0);
+    this.drawLobsterAntennae(cx, 42, antennaDrop, true);
   }
 
   private drawLobsterWorking() {
-    const bob = Math.sin(this.elapsed * 3) * 1.4;
-    const claw = Math.sin(this.elapsed * 10) * 0.08;
+    const typing = Math.sin(this.elapsed * 10);
+    const clawLiftL = Math.max(0, typing) * 5;
+    const clawLiftR = Math.max(0, -typing) * 5;
+    const headDip = Math.sin(this.elapsed * 2.6) * 1;
+    const breathe = Math.sin(this.elapsed * 2.2) * 0.4;
+    const antennaSway = Math.sin(this.elapsed * 5) * 1.5;
+    const cx = 92;
 
-    this.drawShadow(96, 119, 34, 8);
-    this.drawLaptop(107, 91, 64, 40, 0, '#7b8899', '#17202b', '#8fe3ff');
-    this.drawLobsterClaw(72, 92 + bob, -0.2 + claw, false);
-    this.drawLobsterClaw(104, 92 + bob, 0.18 - claw, true);
-    this.drawLobsterBody(82, 92 + bob, 0.88);
-    this.drawLobsterHead(82, 72 + bob, false);
-    this.drawLobsterTail(82, 109 + bob, Math.sin(this.elapsed * 4) * 1.2, 0.03);
-    this.drawLobsterAntennae(82, 57 + bob, Math.sin(this.elapsed * 5) * 1.5, false);
+    this.drawShadow(cx, 120, 38, 7);
+    // 加大电脑屏幕，宽高加倍
+    this.drawLaptop(cx, 86, 110, 68, 0, '#7b8899', '#17202b', '#8fe3ff');
+    
+    // 钳子和手臂需要画在身体的底层（笔记本的上层），这样从背面看就被身体挡住了肩膀，而钳子落在屏幕前方
+    this.drawLobsterTypingArm(cx - 14, 75 + breathe, clawLiftL, false);
+    this.drawLobsterTypingArm(cx + 14, 75 + breathe, clawLiftR, true);
+
+    this.drawLobsterTailFan(cx, 126 + breathe, Math.sin(this.elapsed * 4) * 1);
+    this.drawLobsterSegmentedBody(cx, 72 + breathe, 0.9, false);
+    this.drawLobsterSmallLegs(cx, 82 + breathe, 0);
+    this.drawLobsterBackHead(cx, 56 + headDip);
+    this.drawLobsterAntennae(cx, 50 + headDip, antennaSway, false);
+  }
+
+  /** 龙虾分节身体：一节一节堆叠的圆环，从上到下越来越窄，带电路纹路 */
+  private drawLobsterSegmentedBody(x: number, y: number, breathe: number, showBellyPlate: boolean) {
+    const ctx = this.ctx;
+    ctx.save();
+    const segments = [
+      { cy: y,      rx: 22 * breathe, ry: 11.7 },
+      { cy: y + 13, rx: 20 * breathe, ry: 9.1 },
+      { cy: y + 25, rx: 18 * breathe, ry: 8.5 },
+      { cy: y + 35, rx: 15 * breathe, ry: 7.8 },
+      { cy: y + 44, rx: 12 * breathe, ry: 7.2 },
+    ];
+    for (let i = segments.length - 1; i >= 0; i--) {
+      const seg = segments[i];
+      ctx.fillStyle = this.colors.body;
+      ctx.beginPath();
+      ctx.ellipse(x, seg.cy, seg.rx, seg.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = this.colors.dark;
+      ctx.lineWidth = 1.2;
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.ellipse(x, seg.cy, seg.rx, seg.ry, 0, 0.05 * Math.PI, 0.95 * Math.PI);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // 每节的电路纹路
+      ctx.save();
+      ctx.strokeStyle = this.colors.light;
+      ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 0.55;
+      ctx.lineCap = 'round';
+      // 左侧短线
+      ctx.beginPath();
+      ctx.moveTo(x - seg.rx * 0.3, seg.cy - seg.ry * 0.15);
+      ctx.lineTo(x - seg.rx * 0.55, seg.cy + seg.ry * 0.1);
+      ctx.stroke();
+      // 右侧短线
+      ctx.beginPath();
+      ctx.moveTo(x + seg.rx * 0.25, seg.cy - seg.ry * 0.2);
+      ctx.lineTo(x + seg.rx * 0.5, seg.cy + seg.ry * 0.15);
+      ctx.stroke();
+      // 节点小圆点
+      ctx.fillStyle = this.colors.light;
+      ctx.beginPath();
+      ctx.arc(x - seg.rx * 0.55, seg.cy + seg.ry * 0.1, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + seg.rx * 0.5, seg.cy + seg.ry * 0.15, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+    if (showBellyPlate) {
+      const bellyCenterY = y + 22;
+      const bellyRadiusX = 9 * breathe;
+      const bellyRadiusY = 22;
+
+      // 浅色腹部
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = this.colors.accent;
+      ctx.beginPath();
+      ctx.ellipse(x, bellyCenterY, bellyRadiusX, bellyRadiusY, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 腹部中线电路
+      ctx.save();
+      ctx.strokeStyle = this.colors.light;
+      ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 0.45;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x, y + 4);
+      ctx.lineTo(x, y + 38);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + 12);
+      ctx.lineTo(x + 5, y + 14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + 22);
+      ctx.lineTo(x - 4, y + 24);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + 30);
+      ctx.lineTo(x + 4, y + 32);
+      ctx.stroke();
+      ctx.fillStyle = this.colors.light;
+      for (const dy of [12, 22, 30]) {
+        ctx.beginPath();
+        ctx.arc(x, y + dy, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  /** 龙虾尾扇：3 个大的扇形叶片 */
+  private drawLobsterTailFan(x: number, y: number, wag: number) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.translate(x, y);
+    const fans = [
+      { angle: -0.28 + wag * 0.01, ox: -10, w: 13, h: 9 },
+      { angle: 0 + wag * 0.005, ox: 0, w: 14, h: 10 },
+      { angle: 0.28 - wag * 0.01, ox: 10, w: 13, h: 9 },
+    ];
+    for (const fan of fans) {
+      ctx.save();
+      ctx.translate(fan.ox, 0);
+      ctx.rotate(fan.angle);
+      ctx.fillStyle = this.colors.body;
+      ctx.beginPath();
+      ctx.ellipse(0, 6, fan.w, fan.h, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = this.colors.dark;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.ellipse(0, 6, fan.w, fan.h, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 0.8;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.lineTo(0, 14);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  /** 龙虾小腿：3 对短腿，下方两对更靠近身体 */
+  private drawLobsterSmallLegs(x: number, y: number, pace: number) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = this.colors.dark;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    
+    // 3 对腿：[rootY相对偏移, 腿根X偏移, 末端X扩展量]
+    const legs = [
+      { dy: 6,  rootX: 17, spreadX: 28 },
+      { dy: 15, rootX: 14, spreadX: 22 },
+      { dy: 24, rootX: 11, spreadX: 20 },
+    ];
+    
+    for (let i = 0; i < legs.length; i++) {
+        const { dy, rootX, spreadX } = legs[i];
+        const startY = y + dy;
+        const swing = pace !== 0 ? Math.sin(pace + i * 1.5) * 2 : 0;
+        
+        ctx.beginPath();
+        ctx.moveTo(x - rootX, startY);
+        ctx.quadraticCurveTo(x - spreadX * 0.8, startY + 4, x - spreadX + swing, startY + 13);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(x + rootX, startY);
+        ctx.quadraticCurveTo(x + spreadX * 0.8, startY + 4, x + spreadX - swing, startY + 13);
+        ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /** 龙虾手臂 + 大钳子（坐/走/休息状态用） */
+  private drawLobsterArm(x: number, bodyY: number, side: number, rotation: number) {
+    const ctx = this.ctx;
+    const shoulderX = x + side * 18;
+    const shoulderY = bodyY + 4;
+    // 35° 角：缩短手臂
+    const elbowX = shoulderX + side * 10;
+    const elbowY = shoulderY - 7;
+    const clawX = elbowX + side * 6;
+    const clawY = elbowY - 4;
+
+    ctx.save();
+    ctx.strokeStyle = this.colors.body;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(shoulderX, shoulderY);
+    ctx.lineTo(elbowX, elbowY);
+    ctx.stroke();
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(elbowX, elbowY);
+    ctx.lineTo(clawX, clawY);
+    ctx.stroke();
+
+    // 钳子方向与小臂（elbow -> claw）保持一致
+    const armAngle = Math.atan2(clawY - elbowY, clawX - elbowX);
+
+    ctx.save();
+    ctx.translate(clawX, clawY);
+    ctx.rotate(armAngle + rotation);
+    this.drawLobsterClaw(ctx, 1.85, side);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  /** 龙虾钳子：参考赛博龙虾造型，有电路纹路 */
+  private drawLobsterClaw(ctx: CanvasRenderingContext2D, scale: number, side: number) {
+    ctx.save();
+    ctx.scale(scale, -scale * side);
+
+    ctx.fillStyle = this.colors.body;
+    ctx.strokeStyle = this.colors.dark;
+    ctx.lineWidth = 1.5 / scale;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    // 腕节
+    ctx.beginPath();
+    ctx.ellipse(-0.5, 0.4, 3.4, 4.8, 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 掌部
+    ctx.beginPath();
+    ctx.moveTo(-1.5, -4.2);
+    ctx.bezierCurveTo(4.5, -9.8, 12.5, -8.2, 13.8, -1.8);
+    ctx.bezierCurveTo(14.8, 4.4, 9.4, 8.3, 2.8, 7.2);
+    ctx.bezierCurveTo(-2.4, 6.3, -4.8, 1.3, -1.5, -4.2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 上钳
+    ctx.beginPath();
+    ctx.moveTo(5.2, -1.6);
+    ctx.bezierCurveTo(10.8, -11.6, 22.6, -12.4, 26.8, -5.1);
+    ctx.quadraticCurveTo(24.6, -1.2, 18.4, -0.6);
+    ctx.quadraticCurveTo(11.4, -0.1, 6.8, 0.2);
+    ctx.quadraticCurveTo(4.2, -0.2, 5.2, -1.6);
+    ctx.fill();
+    ctx.stroke();
+
+    // 下钳
+    ctx.beginPath();
+    ctx.moveTo(4.6, 1.8);
+    ctx.bezierCurveTo(9.2, 6.8, 18.3, 7.9, 22.1, 4.5);
+    ctx.quadraticCurveTo(19.4, 1.4, 14.1, 1.2);
+    ctx.quadraticCurveTo(8.8, 1.1, 5.8, 0.4);
+    ctx.quadraticCurveTo(4.1, 0.4, 4.6, 1.8);
+    ctx.fill();
+    ctx.stroke();
+
+    // 虎口齿纹
+    ctx.beginPath();
+    ctx.moveTo(14.4, -0.7);
+    ctx.lineTo(18.1, -2.1);
+    ctx.moveTo(13.7, 0.8);
+    ctx.lineTo(17.4, 1.8);
+    ctx.stroke();
+
+    // 钳子电路纹路
+    ctx.save();
+    ctx.strokeStyle = this.colors.light;
+    ctx.lineWidth = 0.7 / scale;
+    ctx.globalAlpha = 0.6;
+    ctx.lineCap = 'round';
+    // 上钳电路
+    ctx.beginPath();
+    ctx.moveTo(8, -5);
+    ctx.lineTo(12, -7.5);
+    ctx.lineTo(18, -6.5);
+    ctx.stroke();
+    // 掌部电路
+    ctx.beginPath();
+    ctx.moveTo(3, -1);
+    ctx.lineTo(7, -3.5);
+    ctx.lineTo(10, -1.5);
+    ctx.stroke();
+    // 节点小圆点
+    ctx.fillStyle = this.colors.light;
+    ctx.beginPath();
+    ctx.arc(12, -7.5, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(7, -3.5, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(10, -1.5, 0.9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    // 高光
+    ctx.beginPath();
+    ctx.strokeStyle = this.colors.light;
+    ctx.lineWidth = 1.5 / scale;
+    ctx.moveTo(8.6, -6.5);
+    ctx.quadraticCurveTo(13.8, -9.2, 18.2, -7.1);
+    ctx.stroke();
+
+    ctx.strokeStyle = this.colors.dark;
+    ctx.lineWidth = 1.5 / scale;
+    ctx.beginPath();
+    ctx.moveTo(-1.3, 1.5);
+    ctx.quadraticCurveTo(0.4, -0.3, 0.3, -2.4);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /** 龙虾敲键盘的手臂（工作状态，直臂35°伸向键盘，末端大钳子） */
+  private drawLobsterTypingArm(
+    shoulderX: number, shoulderY: number,
+    lift: number,
+    isRight: boolean,
+  ) {
+    const ctx = this.ctx;
+    const dir = isRight ? 1 : -1;
+    // 背身打字时改为向内侧前伸敲击。
+    const clawX = shoulderX - dir * 19;
+    const clawY = shoulderY + 2 - lift * 0.55;
+    const elbowX = shoulderX - dir * 10;
+    const elbowY = shoulderY - 1 - lift * 0.25;
+
+    ctx.save();
+    ctx.strokeStyle = this.colors.body;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(shoulderX, shoulderY);
+    ctx.quadraticCurveTo(elbowX, elbowY, clawX, clawY);
+    ctx.stroke();
+
+    // 左右钳子都朝身体中线方向，保持横向敲击感。
+    ctx.save();
+    ctx.translate(clawX, clawY);
+    ctx.rotate(isRight ? Math.PI - 0.18 : 0.18);
+    this.drawLobsterClaw(ctx, 1.35, dir);
+    ctx.restore();
+
+    ctx.restore();
   }
 
   private drawShadow(x: number, y: number, rx: number, ry: number) {
@@ -375,25 +734,32 @@ export class PetAnimator {
     glowColor: string,
   ) {
     const ctx = this.ctx;
+    const scanlineY = -height + 12 + ((Math.sin(this.elapsed * 2.6) + 1) / 2) * (height - 28);
+    const screenX = -width * 0.31;
+    const screenY = -height + 6;
+    const screenWidth = width * 0.62;
+    const screenHeight = height - 12;
 
     ctx.save();
     ctx.translate(x, y);
 
     ctx.fillStyle = baseColor;
     ctx.beginPath();
-    ctx.roundRect(-width * 0.46, 10, width, 10, 4);
+    ctx.roundRect(-width * 0.48, 10, width * 0.96, 9, 4);
     ctx.fill();
 
+    ctx.fillStyle = '#55616f';
     ctx.beginPath();
-    ctx.moveTo(-width * 0.5, 17);
-    ctx.lineTo(width * 0.48, 17);
-    ctx.lineTo(width * 0.33, 24);
-    ctx.lineTo(-width * 0.38, 24);
-    ctx.closePath();
+    ctx.roundRect(-width * 0.44, 19, width * 0.88, 6, 3);
+    ctx.fill();
+
+    ctx.fillStyle = '#8b97a5';
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.12, 21, width * 0.24, 2, 1);
     ctx.fill();
 
     ctx.save();
-    ctx.translate(-width * 0.12, 10);
+    ctx.translate(0, 10);
     ctx.rotate(-tilt);
     ctx.fillStyle = '#27303b';
     ctx.beginPath();
@@ -401,15 +767,70 @@ export class PetAnimator {
     ctx.fill();
 
     ctx.fillStyle = screenColor;
+    ctx.globalAlpha = 0.92;
     ctx.beginPath();
-    ctx.roundRect(-width * 0.31, -height + 6, width * 0.62, height - 12, 4);
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, 4);
     ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(screenX, screenY, screenWidth, screenHeight, 4);
+    ctx.clip();
+
+    ctx.fillStyle = '#0b141d';
+    ctx.globalAlpha = 0.22;
+    ctx.fillRect(screenX, screenY, screenWidth, screenHeight);
+
+    const lineGap = 6;
+    const scrollOffset = (this.elapsed * 18) % lineGap;
+    const terminalWidths = [0.78, 0.56, 0.84, 0.62, 0.72, 0.48, 0.88, 0.58];
+    const commandColor = '#8ff7ff';
+    const dimCommandColor = '#59c7d4';
+
+    for (let index = -1; index < 8; index += 1) {
+      const lineY = screenY + 8 + index * lineGap - scrollOffset;
+      if (lineY < screenY + 2 || lineY > screenY + screenHeight - 4) {
+        continue;
+      }
+
+      const widthFactor = terminalWidths[((Math.floor(this.elapsed * 3) + index) % terminalWidths.length + terminalWidths.length) % terminalWidths.length];
+      const promptWidth = 4;
+      const commandWidth = Math.max(10, (screenWidth - 16) * widthFactor);
+
+      ctx.fillStyle = commandColor;
+      ctx.globalAlpha = 0.75 - Math.max(0, index) * 0.05;
+      ctx.fillRect(screenX + 6, lineY, promptWidth, 2);
+
+      ctx.fillStyle = dimCommandColor;
+      ctx.globalAlpha = 0.7 - Math.max(0, index) * 0.05;
+      ctx.fillRect(screenX + 13, lineY, commandWidth, 2);
+
+      if (index % 3 === 1) {
+        ctx.globalAlpha = 0.5 - Math.max(0, index) * 0.04;
+        ctx.fillRect(screenX + 18, lineY + 3, commandWidth * 0.42, 1.5);
+      }
+    }
+
+    ctx.fillStyle = '#d6ffff';
+    ctx.globalAlpha = 0.62;
+    ctx.fillRect(screenX + screenWidth - 11, screenY + screenHeight - 9, 6, 2.5);
+
+    ctx.restore();
 
     ctx.fillStyle = glowColor;
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.16;
     ctx.beginPath();
     ctx.roundRect(-width * 0.28, -height + 10, width * 0.56, 6, 3);
     ctx.fill();
+
+    ctx.fillStyle = '#d8fbff';
+    ctx.globalAlpha = 0.1;
+    ctx.beginPath();
+    ctx.roundRect(-width * 0.27, scanlineY, width * 0.54, 3, 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
     ctx.restore();
 
     ctx.restore();
@@ -939,131 +1360,129 @@ export class PetAnimator {
     ctx.restore();
   }
 
-  private drawLobsterTail(x: number, y: number, wag: number, spread: number) {  
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(spread);
-    ctx.fillStyle = this.colors.body;
-    ctx.beginPath();
-    ctx.moveTo(-10, 0);
-    ctx.lineTo(-4, 8 + wag * 0.2);
-    ctx.lineTo(0, 0);
-    ctx.lineTo(4, 8 + wag * 0.2);
-    ctx.lineTo(10, 0);
-    ctx.lineTo(0, 14 + wag * 0.2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
+  private getLobsterBlinkOpen() {
+    const blinkDuration = 0.24;
+    const blinkStart = 3.56;
+    const phase = this.elapsed % 3.8;
 
-  private drawLobsterBody(x: number, y: number, breathe: number) {
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.fillStyle = this.colors.body;
-    ctx.beginPath();
-    ctx.ellipse(x, y, 24 * breathe, 22, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = this.colors.light;
-    ctx.beginPath();
-    ctx.ellipse(x, y + 5, 10 * breathe, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = this.colors.dark;
-    ctx.beginPath();
-    ctx.roundRect(x - 2, y + 16, 4, 10, 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  private drawLobsterHead(x: number, y: number, eyesClosed: boolean) {
-    const ctx = this.ctx;
-    ctx.save();
-    ctx.translate(x, y);
-
-    ctx.fillStyle = this.colors.body;
-    ctx.beginPath();
-    ctx.arc(0, 0, 18, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = this.colors.line;
-    ctx.lineWidth = 1.4;
-    ctx.lineCap = 'round';
-    if (eyesClosed) {
-      ctx.beginPath();
-      ctx.moveTo(-8, -2);
-      ctx.lineTo(-3, -2);
-      ctx.moveTo(3, -2);
-      ctx.lineTo(8, -2);
-      ctx.stroke();
-    } else {
-      this.drawDotLocal(-6, -2, 2.5, this.colors.line);
-      this.drawDotLocal(6, -2, 2.5, this.colors.line);
+    if (phase < blinkStart) {
+      return 1;
     }
 
-    ctx.restore();
+    const t = Math.min(1, (phase - blinkStart) / blinkDuration);
+    return Math.abs(t * 2 - 1);
   }
 
-  private drawLobsterClaw(x: number, y: number, rotation: number, front: boolean) {
+  private drawLobsterHead(x: number, y: number, eyeOpen: number) {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(rotation);
 
-    ctx.strokeStyle = this.colors.body;
-    ctx.lineWidth = 7;
+    // 大圆头
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 甲壳高光
+    ctx.fillStyle = this.colors.light;
+    ctx.globalAlpha = 0.32;
+    ctx.beginPath();
+    ctx.ellipse(-5, -5, 10, 8, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // 头部电路纹路
+    this.drawCircuitLines(ctx, 0, 1, 16, 14);
+
+    // 大眼睛（蓝色）
+    const eyeR = 6.8;
+    const lidH = Math.max(1.2, eyeR * eyeOpen);
+    for (const side of [-1, 1]) {
+      const ex = side * 9;
+      const ey = -3;
+
+      if (eyeOpen <= 0.16) {
+        // 闭眼
+        ctx.strokeStyle = this.colors.dark;
+        ctx.lineWidth = 1.8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(ex - 5, ey);
+        ctx.quadraticCurveTo(ex, ey + 2.2, ex + 5, ey);
+        ctx.stroke();
+      } else {
+        // 白色眼白
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, eyeR, lidH, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // 眼白描边
+        ctx.strokeStyle = this.colors.dark;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(ex, ey, eyeR, lidH, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 蓝色虹膜
+        const irisR = Math.min(eyeR * 0.65, lidH * 0.82);
+        ctx.fillStyle = '#4a90d9';
+        ctx.beginPath();
+        ctx.arc(ex, ey + 0.8, irisR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 黑色瞳孔
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.arc(ex, ey + 0.8, irisR * 0.52, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 高光
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ex - 1.8, ey - Math.max(1.6, lidH * 0.32), 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(ex + 1.4, ey + 1.2, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 开心大嘴
+    ctx.strokeStyle = this.colors.dark;
+    ctx.lineWidth = 1.6;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(16, 0);
+    ctx.moveTo(-6, 8);
+    ctx.quadraticCurveTo(0, 15, 6, 8);
     ctx.stroke();
 
-    ctx.fillStyle = front ? this.colors.dark : this.colors.body;
-    ctx.beginPath();
-    ctx.arc(22, -4, 8, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = this.colors.body;
-    ctx.beginPath();
-    ctx.moveTo(18, -2);
-    ctx.lineTo(31, -12);
-    ctx.lineTo(34, -4);
-    ctx.lineTo(24, -1);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(18, 2);
-    ctx.lineTo(31, 12);
-    ctx.lineTo(34, 4);
-    ctx.lineTo(24, 1);
-    ctx.closePath();
-    ctx.fill();
     ctx.restore();
   }
 
-  private drawLobsterLegs(x: number, y: number, swing: number, walking: boolean) {
+  /** 龙虾工作态背影头：只画后脑壳，不露眼睛 */
+  private drawLobsterBackHead(x: number, y: number) {
     const ctx = this.ctx;
     ctx.save();
-    ctx.strokeStyle = this.colors.dark;
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
+    ctx.translate(x, y);
 
-    for (let index = 0; index < 2; index += 1) {
-      const offset = index === 0 ? -8 : 8;
-      const phase = walking ? (index % 2 === 0 ? swing : -swing) : index === 0 ? 1 : -1;
-      ctx.beginPath();
-      ctx.moveTo(x + offset, y - 1);
-      ctx.quadraticCurveTo(x + offset - 4, y + 6, x + offset - 8, y + 12 + phase * 0.15);
-      ctx.stroke();
+    // 后脑壳椭圆（与正面头部相同大小）
+    ctx.fillStyle = this.colors.body;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-      ctx.beginPath();
-      ctx.moveTo(x + offset, y - 1);
-      ctx.quadraticCurveTo(x + offset + 4, y + 6, x + offset + 8, y + 12 - phase * 0.15);
-      ctx.stroke();
-    }
+    // 甲壳顶部高光
+    ctx.fillStyle = this.colors.light;
+    ctx.globalAlpha = 0.28;
+    ctx.beginPath();
+    ctx.ellipse(3, -5, 10, 7, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // 背面电路纹路
+    this.drawCircuitLines(ctx, 0, -1, 16, 14);
+
     ctx.restore();
   }
 
@@ -1071,16 +1490,92 @@ export class PetAnimator {
     const ctx = this.ctx;
     ctx.save();
     ctx.strokeStyle = this.colors.dark;
-    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
 
-    const lift = resting ? 8 : 12;
+    const lift = resting ? 14 : 22;
+    for (const side of [-1, 1]) {
+      const sx = x + side * 6;
+      const sy = y;
+      
+      // 让大半段保持挺拔向上的斜线，仅尾部末端略微弯曲下垂
+      const cp1X = sx + side * 12;
+      const cp1Y = sy - lift * 0.7;
+      const cp2X = sx + side * 24;
+      const cp2Y = sy - lift * 1.4;
+      const tipX = sx + side * 32 + sway * 0.6;
+      const tipY = sy - lift * 1.1 - sway * 0.2;
+
+      let prevX = sx;
+      let prevY = sy;
+      const segments = 16; // 增加段数让长曲线更平滑
+
+      for (let i = 1; i <= segments; i++) {
+        const t = i / segments;
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const mt3 = mt2 * mt;
+        const t2 = t * t;
+        const t3 = t2 * t;
+
+        const curX = mt3 * sx + 3 * mt2 * t * cp1X + 3 * mt * t2 * cp2X + t3 * tipX;
+        const curY = mt3 * sy + 3 * mt2 * t * cp1Y + 3 * mt * t2 * cp2Y + t3 * tipY;
+
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(curX, curY);
+        // 线条逐渐变细：从宽 3.0 缩小到 0.6
+        ctx.lineWidth = 3.0 * (1 - t * 0.8);
+        ctx.stroke();
+
+        prevX = curX;
+        prevY = curY;
+      }
+    }
+    ctx.restore();
+  }
+
+  /** 在给定区域画简化的电路纹路 */
+  private drawCircuitLines(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+    ctx.save();
+    ctx.strokeStyle = this.colors.light;
+    ctx.fillStyle = this.colors.light;
+    ctx.lineWidth = 0.7;
+    ctx.globalAlpha = 0.5;
+    ctx.lineCap = 'round';
+
+    // 竖主线
     ctx.beginPath();
-    ctx.moveTo(x - 6, y);
-    ctx.quadraticCurveTo(x - 10, y - lift, x - 16 + sway * 0.4, y - lift - 4);
-    ctx.moveTo(x + 6, y);
-    ctx.quadraticCurveTo(x + 10, y - lift, x + 16 + sway * 0.4, y - lift - 4);
+    ctx.moveTo(cx, cy - h * 0.35);
+    ctx.lineTo(cx, cy + h * 0.35);
     ctx.stroke();
+
+    // 左分支
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h * 0.12);
+    ctx.lineTo(cx - w * 0.28, cy - h * 0.06);
+    ctx.lineTo(cx - w * 0.28, cy + h * 0.12);
+    ctx.stroke();
+
+    // 右分支
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + h * 0.08);
+    ctx.lineTo(cx + w * 0.24, cy + h * 0.14);
+    ctx.lineTo(cx + w * 0.24, cy + h * 0.28);
+    ctx.stroke();
+
+    // 节点圆点
+    for (const [px, py] of [
+      [cx, cy - h * 0.12],
+      [cx - w * 0.28, cy + h * 0.12],
+      [cx + w * 0.24, cy + h * 0.14],
+      [cx, cy + h * 0.35],
+    ]) {
+      ctx.beginPath();
+      ctx.arc(px, py, 1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
