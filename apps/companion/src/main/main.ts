@@ -311,13 +311,54 @@ function enableCopilotInstructionsLink(): void {
   }
 }
 
+function getVSCodeSettingsPath(): string {
+  return join(getVSCodeUserDir(), 'settings.json');
+}
+
+const VSCODE_INSTRUCTIONS_SETTING_KEY = 'github.copilot.chat.codeGeneration.instructions';
+
+function syncVSCodeInstructionsSetting(enabled: boolean): void {
+  const settingsPath = getVSCodeSettingsPath();
+  let settings: Record<string, unknown> = {};
+  try {
+    settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  } catch {
+    if (!enabled) return;
+  }
+
+  const instructionsEntry = { file: getInstructionsTargetPath() };
+  const existing = Array.isArray(settings[VSCODE_INSTRUCTIONS_SETTING_KEY])
+    ? (settings[VSCODE_INSTRUCTIONS_SETTING_KEY] as Array<{ file?: string }>)
+    : [];
+
+  const filtered = existing.filter(e => e?.file !== getInstructionsTargetPath());
+
+  if (enabled) {
+    settings[VSCODE_INSTRUCTIONS_SETTING_KEY] = [...filtered, instructionsEntry];
+  } else if (filtered.length > 0) {
+    settings[VSCODE_INSTRUCTIONS_SETTING_KEY] = filtered;
+  } else {
+    delete settings[VSCODE_INSTRUCTIONS_SETTING_KEY];
+  }
+
+  try {
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+    console.log(`[agentpet] VS Code instructions setting ${enabled ? 'registered' : 'removed'}:`, settingsPath);
+  } catch (err) {
+    console.error('[agentpet] Failed to update VS Code settings.json:', err);
+  }
+}
+
 function syncCopilotInstructionsLink(enabled: boolean): void {
   if (enabled) {
     enableCopilotInstructionsLink();
+    syncVSCodeInstructionsSetting(true);
     return;
   }
 
   disableCopilotInstructionsLink();
+  syncVSCodeInstructionsSetting(false);
   console.log('[agentpet] Global instructions removed:', [getInstructionsTargetPath(), getLegacyInstructionsPath()].join(', '));
 }
 
