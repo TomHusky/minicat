@@ -43,10 +43,11 @@ npm run typecheck -w @agentpet/companion
 ```
 
 Companion 启动后会自动注册到 VS Code 全局：
-- `%APPDATA%/Code/User/mcp.json` — MCP Server 配置
+- `~/Library/Application Support/Code/User/mcp.json` — MCP Server 配置（含 `toolApprovalRequired: false`，无需每次授权）
 - `~/.copilot/instructions/agentpet.instructions.md` — 用户级 Copilot instructions 文件
+- `~/Library/Application Support/Code/User/settings.json` — 向 `github.copilot.chat.codeGeneration.instructions` 注入指令文件路径
 
-项目内的 Copilot 指令模板存放在 `apps/companion/public/copilot-instructions.md`，Companion 启动后会从应用资源中复制到全局目录；退出 Companion 时会自动删除该 instructions 文件，避免在应用未运行时继续影响 Copilot。
+项目内的 Copilot 指令模板存放在 `apps/companion/public/copilot-instructions.md`，Companion 启动后会从应用资源中复制到全局目录；退出 Companion 时会自动清理以上所有全局配置（mcp.json、instructions 文件、settings.json 条目），避免在应用未运行时继续影响环境。
 
 所有项目打开后即可使用，无需每个项目单独配置。
 

@@ -69,10 +69,23 @@ idle (坐着 / 睡觉) <-------- (始终回归这里)
 - **设置窗口**：独立的正常窗口 380×420，确保不干扰宠物窗口的透明度
 - 两个窗口加载同一个 HTML，通过 `#settings` hash 路由到不同组件
 
-## 全局注册
+## 全局注册与清理
 
-Companion 启动时自动写入：
-- `%APPDATA%/Code/User/mcp.json` — 所有项目共享 MCP Server
-- `~/.copilot/instructions/agentpet.instructions.md` — 用户级 Copilot instructions 文件
+Companion **启动时**自动写入以下三项全局配置：
 
-Copilot 指令模板跟随应用资源放在 `apps/companion/public/copilot-instructions.md`，便于在打包后的 App 内直接复制到全局配置目录。Companion 退出时会主动删除 `~/.copilot/instructions/agentpet.instructions.md`，让全局指令的生效周期与应用运行周期保持一致。
+| 配置项 | 路径 | 说明 |
+|--------|------|------|
+| MCP Server | `~/Library/Application Support/Code/User/mcp.json` | 注册 `agentpet` stdio 服务，并设置 `toolApprovalRequired: false` 跳过每次授权弹窗 |
+| Copilot instructions 文件 | `~/.copilot/instructions/agentpet.instructions.md` | 用户级 Copilot 指令，指导 Agent 调用 `notify_pet` |
+| VS Code settings.json | `~/Library/Application Support/Code/User/settings.json` | 向 `github.copilot.chat.codeGeneration.instructions` 数组注入指令文件路径，确保所有工作区生效 |
+
+> 路径示例为 macOS，Windows/Linux 会自动适配对应目录。
+
+Copilot 指令模板跟随应用资源放在 `apps/companion/public/copilot-instructions.md`，便于在打包后的 App 内直接复制到全局配置目录。
+
+Companion **退出时**会自动清理以上三项配置：
+- 删除 `~/.copilot/instructions/agentpet.instructions.md`
+- 从 `settings.json` 的 instructions 数组中移除对应条目
+- 从 `mcp.json` 的 servers 中移除 `agentpet` 条目
+
+让全局配置的生效周期与应用运行周期严格保持一致。

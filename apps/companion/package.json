@@ -21,7 +21,6 @@
     "@agentpet/protocol": "0.1.0"
   },
   "devDependencies": {
-    "@lottiefiles/dotlottie-react": "^0.18.9",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "@types/node": "^24.0.0",
