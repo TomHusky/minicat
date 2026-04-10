@@ -6,6 +6,7 @@
   "main": "dist/main/apps/companion/src/main/main.js",
   "scripts": {
     "build": "npm run build:main && npm run build:preload && npm run build:renderer",
+    "pack:mac": "npm run build && electron-builder --mac --config.electronVersion=41.1.1",
     "build:main": "tsc -p tsconfig.main.json",
     "build:preload": "tsc -p tsconfig.preload.json",
     "build:renderer": "vite build",
@@ -17,18 +18,37 @@
     "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.preload.json --noEmit && tsc -p tsconfig.renderer.json --noEmit"
   },
   "dependencies": {
-    "@agentpet/protocol": "0.1.0",
-    "@lottiefiles/dotlottie-react": "^0.18.9",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "@agentpet/protocol": "0.1.0"
   },
   "devDependencies": {
+    "@lottiefiles/dotlottie-react": "^0.18.9",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "electron": "^41.1.1",
+    "electron-builder": "^26.8.1",
     "typescript": "^5.8.3",
     "vite": "^6.3.2"
+  },
+  "build": {
+    "productName": "AgentPet",
+    "files": [
+      "dist/main/**/*",
+      "dist/preload/**/*",
+      "dist/renderer/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist/release"
+    },
+    "mac": {
+      "icon": "build/agentpet.icns",
+      "target": [
+        "dmg"
+      ]
+    }
   }
 }
