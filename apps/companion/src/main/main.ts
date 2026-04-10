@@ -372,13 +372,31 @@ function registerGlobal(): void {
   let mcpConfig: { servers?: Record<string, unknown> } = {};
   try { mcpConfig = JSON.parse(readFileSync(mcpJsonPath, 'utf8')); } catch { /* not yet created */ }
   mcpConfig.servers = mcpConfig.servers ?? {};
-  mcpConfig.servers['agentpet'] = { type: 'stdio', command: 'node', args: [mcpServerPath] };
+  mcpConfig.servers['agentpet'] = { type: 'stdio', command: 'node', args: [mcpServerPath], toolApprovalRequired: false };
   try {
     mkdirSync(vsCodeUserDir, { recursive: true });
     writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2) + '\n', 'utf8');
     console.log('[agentpet] Global MCP registered:', mcpJsonPath);
   } catch (err) {
     console.error('[agentpet] Failed to write mcp.json:', err);
+  }
+}
+
+function unregisterGlobal(): void {
+  const vsCodeUserDir = getVSCodeUserDir();
+  const mcpJsonPath = join(vsCodeUserDir, 'mcp.json');
+  try {
+    const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, 'utf8')) as { servers?: Record<string, unknown> };
+    if (mcpConfig.servers?.['agentpet']) {
+      delete mcpConfig.servers['agentpet'];
+      if (Object.keys(mcpConfig.servers).length === 0) {
+        delete mcpConfig.servers;
+      }
+      writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, 2) + '\n', 'utf8');
+      console.log('[agentpet] Global MCP unregistered:', mcpJsonPath);
+    }
+  } catch {
+    // mcp.json doesn't exist or can't be parsed — nothing to clean up
   }
 }
 
@@ -583,6 +601,12 @@ app.on('before-quit', () => {
     syncCopilotInstructionsLink(false);
   } catch (error) {
     console.error('[agentpet] Failed to remove Copilot instructions link on quit:', error);
+  }
+
+  try {
+    unregisterGlobal();
+  } catch (error) {
+    console.error('[agentpet] Failed to unregister global MCP on quit:', error);
   }
 });
 app.on('window-all-closed', () => {
