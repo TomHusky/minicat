@@ -12,6 +12,7 @@ declare global {
       getUserActivity(): Promise<boolean>;
       saveSettings(settings: PetSettings): Promise<void>;
       closeSettings(): void;
+      openConfigFile(key: string): Promise<string>;
       isSettingsWindow(): boolean;
     };
   }
@@ -121,6 +122,18 @@ function SettingsPanel() {
             <p>打开应用时自动写入用户级 Copilot instructions，退出应用时自动删除该文件。</p>
           </div>
           <div className="settings-status-pill" aria-hidden="true">运行中自动开启</div>
+        </div>
+
+        <div className="settings-section">
+          <label>配置文件</label>
+          <div className="config-links">
+            <button type="button" className="config-link-text" onClick={() => window.agentpet.openConfigFile('settings.json')}>
+              VS Code Settings ↗
+            </button>
+            <button type="button" className="config-link-text" onClick={() => window.agentpet.openConfigFile('instructions')}>
+              Copilot Instructions ↗
+            </button>
+          </div>
         </div>
 
         {saveError ? <div className="settings-error">{saveError}</div> : null}

@@ -47,7 +47,10 @@
       "icon": "build/agentpet.icns",
       "target": [
         "dmg"
-      ]
+      ],
+      "extendInfo": {
+        "LSUIElement": true
+      }
     }
   }
 }

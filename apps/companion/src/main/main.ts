@@ -8,7 +8,7 @@ import type { BrowserWindow as BrowserWindowInstance, Tray as TrayInstance } fro
 import type { PetNotification, PetSettings } from '@agentpet/protocol';
 
 // Use createRequire to avoid the ESM cjsPreparseModuleExports crash in Node.js 22 / Electron 41
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, powerMonitor } =
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, ipcMain, powerMonitor, shell } =
   createRequire(import.meta.url)('electron') as typeof import('electron');
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
@@ -542,7 +542,7 @@ app.whenReady().then(() => {
   }
 
   if (process.platform === 'darwin') {
-    app.dock?.setIcon(nativeImage.createFromPath(getAppIconPath()));
+    app.dock?.hide();
   }
 
   registerGlobal();
@@ -570,6 +570,17 @@ app.whenReady().then(() => {
     settingsWindow?.webContents.send('agentpet:settings-changed', nextSettings);
   });
   ipcMain.on('agentpet:close-settings', () => closeSettingsMode());
+  ipcMain.handle('agentpet:open-config-file', (_e, key: string) => {
+    const paths: Record<string, string> = {
+      'settings.json': join(getVSCodeUserDir(), 'settings.json'),
+      'instructions': getInstructionsTargetPath(),
+    };
+    const target = paths[key];
+    if (target && existsSync(target)) {
+      return shell.openPath(target);
+    }
+    return Promise.resolve(`文件不存在: ${target ?? key}`);
+  });
 
   mainWindow = createPetWindow();
   tray = createTray();

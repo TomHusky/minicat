@@ -552,6 +552,33 @@ html, body, #root {
   white-space: nowrap;
 }
 
+.config-links {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  margin-top: 2px;
+}
+
+.config-link-text {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: transparent;
+}
+
+.config-link-text:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent-fade);
+}
+
 .settings-switch {
   display: inline-flex;
   align-items: center;
