@@ -19,9 +19,7 @@ const SERVER_INFO = {
 const TOOLS = [
   {
     name: 'notify_pet',
-    description:
-      '通知 agentpet 桌面宠物当前任务状态。在开始任务时调用 phase=started，' +
-      '中间步骤调用 phase=progress，完成或出错时调用 phase=completed / phase=failed。',
+    description: '通知桌面宠物任务状态（started/progress/completed/failed）',
     inputSchema: {
       type: 'object',
       properties: {
