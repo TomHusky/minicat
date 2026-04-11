@@ -29,9 +29,6 @@ contextBridge.exposeInMainWorld('agentpet', {
   closeSettings(): void {
     ipcRenderer.send('agentpet:close-settings');
   },
-  openConfigFile(key: string): Promise<string> {
-    return ipcRenderer.invoke('agentpet:open-config-file', key);
-  },
   isSettingsWindow(): boolean {
     return window.location.hash === '#settings';
   },

@@ -1,0 +1,24 @@
+{
+  "name": "agentpet-vscode",
+  "displayName": "AgentPet",
+  "description": "被动监听 Copilot Agent 活动并通知 AgentPet 桌面宠物",
+  "version": "0.1.0",
+  "publisher": "agentpet",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {},
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --sourcemap",
+    "watch": "npm run build -- --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.99.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}
