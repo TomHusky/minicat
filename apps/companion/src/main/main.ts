@@ -337,9 +337,17 @@ function syncCopilotInstructionsLink(enabled: boolean): void {
   console.log('[agentpet] Global instructions removed:', [getInstructionsTargetPath(), getLegacyInstructionsPath()].join(', '));
 }
 
+function getMcpServerPath(): string {
+  if (app.isPackaged) {
+    // In packaged app, MCP server is in Resources/mcp-server/index.mjs
+    return join(process.resourcesPath, 'mcp-server', 'index.mjs');
+  }
+  // In development, resolve from project root
+  return join(getProjectRoot(), 'packages/mcp-server/index.mjs');
+}
+
 function registerGlobal(): void {
-  const projectRoot = getProjectRoot();
-  const mcpServerPath = join(projectRoot, 'packages/mcp-server/index.mjs').replace(/\\/g, '/');
+  const mcpServerPath = getMcpServerPath().replace(/\\/g, '/');
   const vsCodeUserDir = getVSCodeUserDir();
 
   // 1. Write to VS Code user-level mcp.json so ALL projects can use notify_pet

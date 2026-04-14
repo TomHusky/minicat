@@ -43,6 +43,12 @@
     "directories": {
       "output": "dist/release"
     },
+    "extraResources": [
+      {
+        "from": "../../packages/mcp-server/index.mjs",
+        "to": "mcp-server/index.mjs"
+      }
+    ],
     "mac": {
       "icon": "build/agentpet.icns",
       "target": [
