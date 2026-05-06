@@ -1,4 +1,4 @@
-export type AnimalType = 'cat' | 'lobster';
+export type AnimalType = 'cat';
 
 export interface PetSettings {
   animal: AnimalType;

@@ -26,7 +26,6 @@ function isIdleLikeStatus(status: PetPhase) {
 
 const ANIMALS: { type: AnimalType; emoji: string; label: string }[] = [
   { type: 'cat', emoji: '🐱', label: '猫咪' },
-  { type: 'lobster', emoji: '🦞', label: '龙虾' },
 ];
 
 const SUPPORTED_ANIMALS = new Set<AnimalType>(ANIMALS.map(animal => animal.type));
@@ -95,7 +94,7 @@ function SettingsPanel() {
             <p className="settings-subtitle">调整宠物外观。Companion 运行期间会自动接入 Copilot 全局指令，退出应用时自动清理。</p>
           </div>
           <div className="settings-preview" aria-hidden="true">
-            <span>{editAnimal === 'lobster' ? '🦞' : '🐱'}</span>
+            <span>🐱</span>
           </div>
         </div>
 
@@ -206,7 +205,13 @@ function PetView() {
       return;
     }
 
-    if (!isIdleLikeStatus(status)) {
+    if (status === 'completed') {
+      setPetAnimationState('completed');
+      return;
+    }
+
+    if (status === 'failed') {
+      setPetAnimationState('failed');
       return;
     }
 

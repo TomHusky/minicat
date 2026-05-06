@@ -61,7 +61,7 @@ function getSettingsPath(): string {
 function normalizeSettings(raw: unknown): PetSettings {
   const parsed = raw && typeof raw === 'object' ? raw as Partial<PetSettings> : {};
   return {
-    animal: parsed.animal === 'lobster' ? 'lobster' : 'cat',
+    animal: 'cat',
     name: typeof parsed.name === 'string' ? parsed.name : '',
     copilotListenerEnabled: DEFAULT_SETTINGS.copilotListenerEnabled,
   };
@@ -310,6 +310,8 @@ function syncVSCodeInstructionsSetting(enabled: boolean): void {
 
   if (enabled) {
     settings[VSCODE_INSTRUCTIONS_SETTING_KEY] = [...filtered, instructionsEntry];
+    // Ensure instruction files are enabled
+    settings['github.copilot.chat.codeGeneration.useInstructionFiles'] = true;
   } else if (filtered.length > 0) {
     settings[VSCODE_INSTRUCTIONS_SETTING_KEY] = filtered;
   } else {
